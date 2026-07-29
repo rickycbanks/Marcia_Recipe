@@ -1,0 +1,12 @@
+node_modules
+.next
+data
+coverage
+test-results
+playwright-report
+.git
+*.tsbuildinfo
+.env
+.env.local
+Dockerfile
+docker-compose.yml

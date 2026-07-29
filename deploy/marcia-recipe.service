@@ -1,0 +1,23 @@
+[Unit]
+Description=Marcia Recipe
+After=network.target
+
+[Service]
+Type=simple
+User=marcia-recipe
+Group=marcia-recipe
+WorkingDirectory=/opt/marcia-recipe
+EnvironmentFile=/etc/marcia-recipe/marcia-recipe.env
+Environment=NODE_ENV=production
+Environment=DATA_ROOT=/var/lib/marcia-recipe
+ExecStart=/usr/bin/node /opt/marcia-recipe/.next/standalone/server.js
+Restart=on-failure
+RestartSec=5
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/var/lib/marcia-recipe
+
+[Install]
+WantedBy=multi-user.target

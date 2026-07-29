@@ -1,0 +1,183 @@
+@import "tailwindcss";
+@plugin "@tailwindcss/typography";
+
+/* Map semantic tokens into Tailwind's theme so utilities like
+   bg-background, text-foreground, bg-card, text-muted-foreground work. */
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-border: var(--border);
+  --color-danger: var(--danger);
+  --color-danger-foreground: var(--danger-foreground);
+  --font-display: var(--font-display);
+  --font-body: var(--font-body);
+}
+
+/* ------------------------------- editorial -------------------------------- */
+[data-theme="editorial"] {
+  --font-display: Georgia, "Times New Roman", serif;
+  --font-body: ui-sans-serif, system-ui, sans-serif;
+  --background: #faf8f4;
+  --foreground: #26221c;
+  --card: #ffffff;
+  --card-foreground: #26221c;
+  --muted: #efeae1;
+  --muted-foreground: #6f665a;
+  --accent: #8c4a2f;
+  --accent-foreground: #fff8f2;
+  --border: #ddd5c8;
+  --danger: #b3352c;
+  --danger-foreground: #fff5f4;
+}
+[data-theme="editorial"][data-mode="dark"] {
+  --background: #1c1915;
+  --foreground: #ece5d8;
+  --card: #26221c;
+  --card-foreground: #ece5d8;
+  --muted: #332d24;
+  --muted-foreground: #a99f8f;
+  --accent: #d08a63;
+  --accent-foreground: #241611;
+  --border: #40382d;
+  --danger: #e06c5f;
+  --danger-foreground: #2b100d;
+}
+
+/* --------------------------------- warm ----------------------------------- */
+[data-theme="warm"] {
+  --font-display: "Trebuchet MS", ui-rounded, ui-sans-serif, system-ui, sans-serif;
+  --font-body: ui-sans-serif, system-ui, sans-serif;
+  --background: #fdf3ec;
+  --foreground: #38220f;
+  --card: #fffaf5;
+  --card-foreground: #38220f;
+  --muted: #f7e3d2;
+  --muted-foreground: #8a5f3f;
+  --accent: #c2571b;
+  --accent-foreground: #fff7ef;
+  --border: #eed6c2;
+  --danger: #c0392b;
+  --danger-foreground: #fff5f4;
+}
+[data-theme="warm"][data-mode="dark"] {
+  --background: #211309;
+  --foreground: #f5e2d0;
+  --card: #2c1a0d;
+  --card-foreground: #f5e2d0;
+  --muted: #3d2615;
+  --muted-foreground: #c39a74;
+  --accent: #e8834a;
+  --accent-foreground: #2c1505;
+  --border: #4a2f1b;
+  --danger: #ec7063;
+  --danger-foreground: #2b100d;
+}
+
+/* --------------------------------- ocean ---------------------------------- */
+[data-theme="ocean"] {
+  --font-display: "Avenir Next", "Segoe UI", ui-sans-serif, system-ui, sans-serif;
+  --font-body: "Segoe UI", ui-sans-serif, system-ui, sans-serif;
+  --background: #f2f7f9;
+  --foreground: #10262e;
+  --card: #ffffff;
+  --card-foreground: #10262e;
+  --muted: #e0ecf0;
+  --muted-foreground: #527080;
+  --accent: #0e6e8c;
+  --accent-foreground: #effafe;
+  --border: #cfe0e7;
+  --danger: #bf4040;
+  --danger-foreground: #fdf2f2;
+}
+[data-theme="ocean"][data-mode="dark"] {
+  --background: #0b1c22;
+  --foreground: #d9ecf2;
+  --card: #112830;
+  --card-foreground: #d9ecf2;
+  --muted: #1a3a44;
+  --muted-foreground: #8fb4c1;
+  --accent: #4fb3d3;
+  --accent-foreground: #06222c;
+  --border: #234552;
+  --danger: #e07a7a;
+  --danger-foreground: #2b1010;
+}
+
+/* -------------------------------- minimal --------------------------------- */
+[data-theme="minimal"] {
+  --font-display: ui-sans-serif, system-ui, sans-serif;
+  --font-body: ui-sans-serif, system-ui, sans-serif;
+  --background: #ffffff;
+  --foreground: #161616;
+  --card: #fafafa;
+  --card-foreground: #161616;
+  --muted: #f0f0f0;
+  --muted-foreground: #666666;
+  --accent: #161616;
+  --accent-foreground: #ffffff;
+  --border: #e2e2e2;
+  --danger: #c62f2f;
+  --danger-foreground: #ffffff;
+}
+[data-theme="minimal"][data-mode="dark"] {
+  --background: #121212;
+  --foreground: #e8e8e8;
+  --card: #1b1b1b;
+  --card-foreground: #e8e8e8;
+  --muted: #262626;
+  --muted-foreground: #9a9a9a;
+  --accent: #e8e8e8;
+  --accent-foreground: #121212;
+  --border: #333333;
+  --danger: #e06666;
+  --danger-foreground: #1b0d0d;
+}
+
+@layer base {
+  html {
+    color-scheme: light;
+  }
+  html[data-mode="dark"] {
+    color-scheme: dark;
+  }
+  body {
+    @apply bg-background text-foreground font-body antialiased;
+  }
+  h1, h2, h3, h4 {
+    @apply font-display;
+  }
+  *:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+  }
+}
+
+@layer components {
+  .card {
+    @apply rounded-xl border border-border bg-card text-card-foreground shadow-sm;
+  }
+  .btn-primary {
+    @apply inline-flex items-center justify-center gap-2 rounded-lg bg-accent px-4 py-2 text-sm font-medium text-accent-foreground transition-colors hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50;
+  }
+  .btn-secondary {
+    @apply inline-flex items-center justify-center gap-2 rounded-lg border border-border bg-card px-4 py-2 text-sm font-medium text-card-foreground transition-colors hover:bg-muted disabled:cursor-not-allowed disabled:opacity-50;
+  }
+  .btn-danger {
+    @apply inline-flex items-center justify-center gap-2 rounded-lg bg-danger px-4 py-2 text-sm font-medium text-danger-foreground transition-colors hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50;
+  }
+  .input {
+    @apply w-full rounded-lg border border-border bg-card px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground;
+  }
+  .label {
+    @apply mb-1 block text-sm font-medium text-foreground;
+  }
+  .badge {
+    @apply inline-flex items-center rounded-full bg-muted px-2.5 py-0.5 text-xs font-medium text-muted-foreground;
+  }
+}
