@@ -4,6 +4,7 @@ import { getEnv } from "@/lib/env";
 import { logger } from "@/lib/logger";
 import { cleanupOrphanedTmpFiles, ensureDataRoot } from "@/lib/storage/dataRoot";
 import { getSearchIndex } from "@/lib/storage/indexes";
+import { withLock } from "@/lib/storage/lock";
 import { getSiteConfig } from "@/lib/storage/repositories/config";
 
 let ran = false;
@@ -21,10 +22,13 @@ export async function runStartupChecks(): Promise<void> {
   ran = true;
   const env = getEnv(); // throws CONFIG_INVALID with an actionable message
   await ensureDataRoot();
-  await cleanupOrphanedTmpFiles();
-  const config = await getSiteConfig(); // quarantines malformed config, falls back to defaults
-  await getSearchIndex(); // rebuilds derived index when missing/corrupt
-  await rotateAuditLogs();
+  const config = await withLock("root-swap", async () => {
+    await cleanupOrphanedTmpFiles();
+    const loaded = await getSiteConfig(); // quarantines malformed config, falls back to defaults
+    await getSearchIndex(); // rebuilds derived index when missing/corrupt
+    await rotateAuditLogs();
+    return loaded;
+  });
   await audit({
     type: "settings.updated",
     actorAccountId: null,

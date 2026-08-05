@@ -1,74 +1,167 @@
 # Marcia Recipe
 
-Marcia Recipe is a self-hosted recipe binder for one owner and invited guests.
-It uses Next.js and a filesystem-backed JSON store instead of a database.
+Marcia Recipe is a self-hosted, flat-file recipe binder for **one owner and their invited guests**.
+It is built with Next.js 16 and stores everything as JSON files on a persistent writable
+filesystem — **no database required**. It is designed for a single household: fewer than 2,000
+recipes, fewer than 25 accounts, and low concurrent traffic.
+
+> **Why flat-file?** One owner, one instance, one directory to back up. No database server to
+> run, no migrations to forget, no state to lose when a container restarts. Copy the data
+> directory and you have a complete, restorable snapshot.
+
+---
 
 ## Features
 
-- Recipe creation, editing, archiving, media uploads, tags, categories, and visibility controls
-- Public, members-only, and owner-only recipes
-- Owner-issued invitations with individually assigned guest capabilities
-- Private per-account meal plans and shopping lists
-- URL recipe import with JSON-LD, Microdata, RDFa, print-view, Wayback, and Jina fallbacks
-- Browser-side OCR with owner review before saving
-- Four visual themes, dark/light mode, fuzzy search, and an installable PWA shell
-- Atomic writes, cross-process locks, schema validation, migrations, backups, and restore validation
+### Recipes
+- Full recipe management: create, edit, archive, and restore
+- Ingredients, steps, and Markdown-formatted notes
+- Tags, categories, difficulty, servings, prep/cook times, and source URLs
+- Per-recipe media uploads (images validated, resized, and converted to WebP via Sharp)
+- Slug-based URLs with prior-slug alias preservation (renames never break links)
+- Three visibility levels: **Public**, **Members-only**, and **Owner-only** (plus a site-wide default)
+
+### Accounts & invitations
+- One owner account, created during first-run setup
+- Owner-issued invitations with individually assigned guest capabilities:
+  - **Read recipes** (`recipes.read`)
+  - **Use meal plans** (`mealPlans.use`)
+  - **Use shopping lists** (`shoppingLists.use`)
+- Invitations are single-use, secret-hashed at rest, and expire on a schedule
+- Guest access can be revoked instantly — capabilities reload on every protected request
+
+### Personal tools (per-account, private)
+- Weekly **meal planner** tied to recipes by immutable ID
+- **Shopping lists** generated from meal plans, with manual items and check-off state
+- Saved shopping lists are snapshots — recipe edits never silently alter a saved list
+- Archived recipes show as tombstones in historical meal plans
+
+### Recipe import
+- **URL import** with JSON-LD, Microdata, and RDFa extraction
+- Fallback fetch strategies: direct, print-view, Wayback Machine, and Jina reader
+- SSRF-hardened fetcher: validates protocol, ports, DNS, redirects, response size, and timeouts
+- **OCR import** (browser-side Tesseract.js available, but it's not very good; server-side Mistral OCR when
+  `MISTRAL_API_KEY` is set)
+- Imports and OCR produce **drafts** — nothing is saved until the owner reviews and submits
+
+### Search, themes, and PWA
+- Fuzzy search (Fuse.js) over a per-request, visibility-filtered search index
+- Four visual themes (Editorial, Warm, Ocean, Minimal) with light/dark modes
+- Installable PWA shell with offline fallback
+- Service worker precaches only the static shell — **never** recipe content, media, or API responses
+
+### Storage & operations
+- Atomic JSON writes (temp file → fsync → rename) — a crash leaves either the old or new file, never a torn write
+- Cross-process filesystem locking (`proper-lockfile`)
+- Zod schema validation on every loaded document
+- Schema migrations with a version-aware CLI
+- Backup / restore CLI with dry-run and validation
+- Derived indexes (search, thumbnails) are disposable and rebuildable
+
+### Security
+- Auth.js (next-auth v5) Credentials provider with JWT sessions — **no database adapter**
+- JWTs carry only the account ID and session version — never capabilities
+- Capabilities are reloaded from the account file on **every** protected operation
+- Login rate limiting by username and client address
+- Secure, HTTP-only, SameSite cookies
+- Same-origin validation on all cookie-authenticated mutations
+- Owner password reset via local CLI (no email dependency)
+
+---
+
+## Screenshots
+
+Screenshots live in [`docs/screenshots/`](docs/screenshots) and are captured from a running
+local instance. See [`docs/screenshots/README.md`](docs/screenshots/README.md) for capture
+instructions.
+
+| View | Screenshot |
+| --- | --- |
+| Recipe list (public) | ![Recipe list](docs/screenshots/recipe-list.png) |
+| Recipe detail | ![Recipe detail](docs/screenshots/recipe-detail.png) |
+| Admin dashboard | ![Admin dashboard](docs/screenshots/admin-dashboard.png) |
+| Recipe editor | ![Recipe editor](docs/screenshots/recipe-editor.png) |
+| Meal planner | ![Meal planner](docs/screenshots/meal-planner.png) |
+| Shopping list | ![Shopping list](docs/screenshots/shopping-list.png) |
+| Import panel (URL + OCR) | ![Import panel](docs/screenshots/import-panel.png) |
+| Invitations manager | ![Invitations](docs/screenshots/invitations.png) |
+| Settings & themes | ![Settings](docs/screenshots/settings.png) |
+
+> If a screenshot file is missing, run the local dev server (`npm run dev`) and follow the
+> capture steps in `docs/screenshots/README.md`.
+
+---
 
 ## Requirements
 
-- Node.js 22 LTS or newer
-- A persistent writable filesystem
-- One writable application instance
+- **Node.js 22 LTS** or newer (required by Next.js 16, Sharp, Undici, and the test toolchain)
+- A **persistent writable filesystem** for `DATA_ROOT`
+- **One writable application instance** (no cluster mode, no multiple replicas against the same
+  data directory)
 
-Runtime data is stored beneath `DATA_ROOT` and is not part of the application build. Do not run multiple
-writable replicas against the same directory unless a shared-filesystem locking design has been verified.
+---
 
-## Local development
+## Quick start (local development)
 
 ```sh
 npm ci
-cp .env.example .env # create this file with the values below
+cp .env.example .env   # then edit values
 npm run dev
 ```
 
-Required production environment variables:
+Open `http://localhost:3000`, then visit `/setup` once and enter your `SETUP_TOKEN` to create
+the owner account. Web setup is disabled after the first owner exists.
 
-```dotenv
-NODE_ENV=production
-DATA_ROOT=/var/lib/marcia-recipe
-AUTH_SECRET=replace-with-at-least-32-random-characters
-SETUP_TOKEN=replace-with-a-long-one-time-setup-token
-APP_ORIGIN=https://recipes.example.com
-```
+### Environment variables
+
+| Variable | Required | Description |
+| --- | --- | --- |
+| `NODE_ENV` | yes | `development` / `test` / `production` |
+| `DATA_ROOT` | yes | Absolute path to the mutable data directory |
+| `AUTH_SECRET` | prod | ≥32 random chars; signs session JWTs |
+| `SETUP_TOKEN` | prod | One-time token for first-run owner setup |
+| `APP_ORIGIN` | prod | Public origin, e.g. `https://recipes.example.com` |
+| `MISTRAL_API_KEY` | optional | Enables server-side Mistral OCR for imports |
 
 Generate secrets with:
 
 ```sh
-openssl rand -base64 48
+openssl rand -base64 48   # AUTH_SECRET
+openssl rand -hex 16      # SETUP_TOKEN
 ```
 
-Open `/setup` once after starting the app and enter `SETUP_TOKEN` to create the owner account. Web setup is
-disabled after the first owner is created. The local CLI can create the owner without a web setup token:
+---
+
+## How to build
 
 ```sh
-npm run cli:create-owner
-npm run cli:reset-password -- --username owner
-```
-
-## Checks
-
-```sh
-npm run typecheck
-npm run lint
-npm test
+npm ci
 npm run build
 ```
 
-The project requires Node 22 because of Next.js, Sharp, Undici, and the current testing toolchain.
+The production build uses Next.js `standalone` output, producing a self-contained
+`.next/standalone/server.js` that runs without `next start`.
 
-## Docker deployment
+### Checks
 
-Create a `.env` file beside `docker-compose.yml`:
+```sh
+npm run typecheck   # tsc --noEmit
+npm run lint        # eslint .
+npm test           # vitest run (unit tests)
+npm run e2e         # playwright (browser smoke tests)
+npm run build       # production build
+```
+
+---
+
+## How to deploy
+
+Marcia Recipe supports two deployment modes. **For a full step-by-step guide to deploying on
+Oracle Cloud's Always Free tier, see [`oracle_cloud.md`](oracle_cloud.md).**
+
+### Option A — Docker (recommended)
+
+Create a `.env` beside `docker-compose.yml`:
 
 ```dotenv
 AUTH_SECRET=replace-with-at-least-32-random-characters
@@ -76,26 +169,21 @@ SETUP_TOKEN=replace-with-a-long-one-time-setup-token
 APP_ORIGIN=https://recipes.example.com
 ```
 
-Then start the single application instance:
+Then:
 
 ```sh
 docker compose up -d --build
 docker compose logs -f app
 ```
 
-The named `marcia_recipe_data` volume contains all accounts, recipes, media, and personal data. Back it up
-regularly and keep a copy off the host:
+The named `marcia_recipe_data` volume holds all accounts, recipes, media, and personal data.
+Back it up regularly and keep a copy off the host.
 
-```sh
-npm run cli:backup
-```
+Place a TLS reverse proxy (Caddy, Nginx) in front of port 3000. **Never expose the dev server
+or port 3000 directly to the public internet.** A minimal Caddyfile is in
+`deploy/Caddyfile.example`.
 
-For production, place Caddy, Nginx, or another TLS reverse proxy in front of port 3000. Do not expose the
-development server directly to the public internet.
-
-## Direct Node deployment
-
-The application can also run without Docker:
+### Option B — Direct Node.js
 
 ```sh
 npm ci
@@ -105,13 +193,47 @@ NODE_ENV=production DATA_ROOT=/var/lib/marcia-recipe \
   npm start
 ```
 
-`deploy/marcia-recipe.service` is a systemd example. Copy it to `/etc/systemd/system/`, create a dedicated
-`marcia-recipe` user, create `/var/lib/marcia-recipe`, and put secrets in
-`/etc/marcia-recipe/marcia-recipe.env` with mode `0600`. Use `deploy/Caddyfile.example` as a minimal TLS
-reverse-proxy starting point.
+A systemd unit example is at `deploy/marcia-recipe.service`:
+- Copy it to `/etc/systemd/system/`
+- Create a dedicated `marcia-recipe` user
+- Create `/var/lib/marcia-recipe`
+- Put secrets in `/etc/marcia-recipe/marcia-recipe.env` (mode `0600`)
+- Use `deploy/Caddyfile.example` as a TLS reverse-proxy starting point
 
-## CLI operations
+---
 
+## How to use
+
+### First run
+1. Start the app and visit `/setup`
+2. Enter your `SETUP_TOKEN` to create the owner account
+3. Log in and configure site settings (default visibility, theme) at `/admin/settings`
+
+> The local CLI can create the owner without a web setup token:
+> ```sh
+> npm run cli:create-owner
+> npm run cli:reset-password -- --username owner
+> ```
+
+### Adding recipes
+- **Manual**: `/admin/recipes/new` — fill in title, ingredients, steps, notes, media, visibility
+- **URL import**: `/admin` → Import panel → paste a recipe URL → review the draft → save
+- **OCR import**: `/admin` → Import panel → upload an image → review the extracted draft → save
+- Imports and OCR **never** save directly — you always review a draft first
+
+### Inviting guests
+1. `/admin/invitations` → New invitation
+2. Choose capabilities (Read recipes / Use meal plans / Use shopping lists)
+3. Set an expiry
+4. Send the one-time invitation link — the secret is shown **only once**
+5. The guest follows the link, creates an account, and lands with the assigned capabilities
+
+### Meal planning & shopping lists
+- `/meal-planner` — drag recipes into a weekly grid (requires `mealPlans.use`)
+- Generate a shopping list from a plan (requires `shoppingLists.use`)
+- `/shopping-lists` — check items off, add manual items, export
+
+### Backups & maintenance
 ```sh
 npm run cli:backup -- --data-root /var/lib/marcia-recipe
 npm run cli:restore -- --file backups/marcia-backup-...tar.gz --dry-run
@@ -120,14 +242,30 @@ npm run cli:migrate -- --data-root /var/lib/marcia-recipe
 npm run cli:rebuild-indexes -- --data-root /var/lib/marcia-recipe
 ```
 
-Always create a backup before migration or restore. Restore validation happens before any canonical files are
-replaced; `--force` is required to replace an existing data root.
+Always back up before migration or restore. Restore validation runs before any canonical
+files are replaced; `--force` is required to replace an existing data root.
 
-## Security and privacy notes
+---
 
-- Guest capabilities are loaded from their account file on every protected request, so revocation is immediate.
-- JWTs contain only the account ID and session version; they are not the authorization source of truth.
-- Private recipe pages, search entries, media, API responses, and personal data are not service-worker cached.
-- URL import validates protocol, ports, DNS results, redirects, response size, content type, and timeouts.
-- Recipe imports and OCR produce drafts; nothing is saved until the owner reviews and submits the recipe form.
-- Keep `DATA_ROOT` outside the repository and never commit `.env` or backup archives.
+## Security & privacy notes
+
+- Guest capabilities reload from the account file on every protected request — revocation is immediate
+- JWTs contain only the account ID and session version; they are **not** the authorization source of truth
+- Private recipe pages, search entries, media, API responses, and personal data are **not** service-worker cached
+- URL import validates protocol, ports, DNS results, redirects, response size, content type, and timeouts
+- Recipe imports and OCR produce drafts; nothing is saved until the owner reviews and submits
+- Keep `DATA_ROOT` outside the repository and never commit `.env` or backup archives
+
+---
+
+## Documentation
+
+- [`README.md`](README.md) — this file (features, build, deploy, usage)
+- [`ARCHITECTURE.md`](ARCHITECTURE.md) — how the app is built, what each part is, and why
+- [`oracle_cloud.md`](oracle_cloud.md) — step-by-step Oracle Cloud Always Free deployment
+
+---
+
+## License
+
+UNLICENSED — private, self-hosted software.

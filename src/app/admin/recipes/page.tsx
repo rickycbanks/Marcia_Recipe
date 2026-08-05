@@ -24,6 +24,7 @@ export default async function AdminRecipesPage() {
           category: r.category,
           archived: r.archivedAt !== null,
           mediaCount: r.media.length,
+          primaryMediaId: r.media.find((m) => m.isPrimary)?.id ?? r.media[0]?.id ?? null,
           updatedAt: r.updatedAt,
         }))}
       />

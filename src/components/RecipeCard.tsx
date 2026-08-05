@@ -8,9 +8,32 @@ export interface RecipeCardData {
   tags: string[];
   primaryMediaId: string | null;
   id: string;
+  prepMinutes: number | null;
+  cookMinutes: number | null;
+  totalMinutes: number | null;
+  difficulty: "easy" | "medium" | "hard" | null;
+}
+
+function formatMinutes(value: number | null): string | null {
+  if (value === null) return null;
+  return `${value} min`;
+}
+
+function difficultyLabel(value: "easy" | "medium" | "hard"): string {
+  const map: Record<string, string> = { easy: "Easy", medium: "Medium", hard: "Hard" };
+  return map[value] ?? value;
 }
 
 export function RecipeCard({ recipe }: { recipe: RecipeCardData }) {
+  const metaParts: string[] = [];
+  const prep = formatMinutes(recipe.prepMinutes);
+  const cook = formatMinutes(recipe.cookMinutes);
+  const total = formatMinutes(recipe.totalMinutes);
+  if (total) metaParts.push(total);
+  else if (prep) metaParts.push(prep);
+  if (cook && !metaParts.includes(cook)) metaParts.push(`${cook} cook`);
+  if (recipe.difficulty) metaParts.push(difficultyLabel(recipe.difficulty));
+
   return (
     <Link
       href={`/recipes/${recipe.slug}`}
@@ -36,6 +59,11 @@ export function RecipeCard({ recipe }: { recipe: RecipeCardData }) {
         </h3>
         {recipe.description ? (
           <p className="line-clamp-2 text-sm text-muted-foreground">{recipe.description}</p>
+        ) : null}
+        {metaParts.length > 0 ? (
+          <p className="text-xs text-muted-foreground" aria-label="Recipe timing and difficulty">
+            {metaParts.join(" · ")}
+          </p>
         ) : null}
         <div className="mt-auto flex flex-wrap gap-1 pt-1">
           {recipe.category ? <span className="badge">{recipe.category}</span> : null}

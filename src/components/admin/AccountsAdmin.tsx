@@ -8,6 +8,7 @@ const DEPENDENCIES: Record<string, string[]> = {
   "mealPlans.use": ["recipes.read"],
   "shoppingLists.use": ["recipes.read"],
 };
+const CAPABILITY_LABELS: Record<string, string> = { "recipes.read": "Read recipes", "mealPlans.use": "Use meal plans", "shoppingLists.use": "Use shopping lists" };
 
 interface AccountRow {
   id: string;
@@ -93,7 +94,7 @@ export function AccountsAdmin({ accounts, selfId }: { accounts: AccountRow[]; se
                           disabled={busyId === account.id || account.disabled}
                           onChange={() => toggleCapability(account, cap)}
                         />
-                        {cap}
+                        {CAPABILITY_LABELS[cap] ?? "Additional access"}
                       </label>
                     ))}
                   </div>

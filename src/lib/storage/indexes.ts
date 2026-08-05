@@ -3,8 +3,11 @@ import { nowIso } from "@/lib/time";
 import { searchIndexSchema } from "@/lib/validation/schemas";
 import { SCHEMA_VERSIONS } from "@/lib/validation/constants";
 import { readJson, writeJsonAtomic } from "./atomic";
+import { withLock } from "./lock";
 import { resolveWithin } from "./paths";
+import { quarantineFile } from "./quarantine";
 import { listRecipes } from "./repositories/recipes";
+import { join } from "node:path";
 
 const indexPath = () => resolveWithin("indexes", "search.json");
 
@@ -19,15 +22,15 @@ function toEntry(recipe: Recipe): SearchIndexEntry {
     visibility: recipe.visibility,
     archived: recipe.archivedAt !== null,
     primaryMediaId: recipe.media.find((m) => m.isPrimary)?.id ?? recipe.media[0]?.id ?? null,
+    prepMinutes: recipe.prepMinutes,
+    cookMinutes: recipe.cookMinutes,
+    totalMinutes: (recipe.prepMinutes ?? 0) + (recipe.cookMinutes ?? 0) || null,
+    difficulty: recipe.difficulty,
   };
 }
 
-/**
- * Rebuild the derived search/slug index from canonical recipe files.
- * The index is disposable: delete it and it is rebuilt on demand.
- */
-export async function rebuildSearchIndex(): Promise<SearchIndex> {
-  const recipes = await listRecipes();
+/** Build the disposable index without consulting DATA_ROOT. */
+export function buildSearchIndex(recipes: Recipe[]): SearchIndex {
   const slugToId: Record<string, string> = {};
   const entries: SearchIndexEntry[] = [];
   for (const recipe of recipes) {
@@ -39,21 +42,39 @@ export async function rebuildSearchIndex(): Promise<SearchIndex> {
     entries.push(toEntry(recipe));
   }
   entries.sort((a, b) => a.title.localeCompare(b.title));
-  const index: SearchIndex = {
+  return {
     schemaVersion: SCHEMA_VERSIONS.searchIndex,
     builtAt: nowIso(),
     slugToId,
     entries,
   };
+}
+
+/** Write an index for a root that is not the live DATA_ROOT (restore staging). */
+export async function writeSearchIndexAt(root: string, recipes: Recipe[]): Promise<SearchIndex> {
+  const index = buildSearchIndex(recipes);
+  await writeJsonAtomic(join(root, "indexes", "search.json"), index);
+  return index;
+}
+
+/**
+ * Rebuild the derived search/slug index from canonical recipe files.
+ * The index is disposable: delete it and it is rebuilt on demand.
+ */
+export async function rebuildSearchIndex(): Promise<SearchIndex> {
+  const recipes = await listRecipes();
+  const index = buildSearchIndex(recipes);
   await writeJsonAtomic(indexPath(), index);
   return index;
 }
 
 /** Load the index, rebuilding when missing or unreadable (derived data self-heals). */
 export async function getSearchIndex(): Promise<SearchIndex> {
-  const index = await readJson(indexPath(), searchIndexSchema);
-  if (index) return index;
-  return rebuildSearchIndex();
+  return withLock("root-swap", async () => {
+    const index = await readJson(indexPath(), searchIndexSchema, { quarantine: quarantineFile });
+    if (index) return index;
+    return rebuildSearchIndex();
+  });
 }
 
 /** Resolve a slug (current or alias) to a recipe id. */

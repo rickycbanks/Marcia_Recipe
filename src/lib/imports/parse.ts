@@ -4,20 +4,23 @@ import type { RecipeDraft } from "@/types";
 import {
   parseIngredientLine,
   parseIsoDuration,
+  parseMinutesFromText,
   parseServings,
   sanitizeText,
 } from "./textParsing";
 
 /**
  * Recipe extraction from HTML: schema.org JSON-LD first, then Microdata,
- * then RDFa. All extracted text is sanitized (cheerio .text() never returns
- * markup, and sanitizeText strips control characters). The result is a DRAFT
- * — nothing is persisted until the owner reviews and saves it.
+ * then RDFa, then WP Recipe Maker (a class-based fallback for WordPress
+ * recipe plugins that publish no structured data). All extracted text is
+ * sanitized (cheerio .text() never returns markup, and sanitizeText strips
+ * control characters). The result is a DRAFT — nothing is persisted until
+ * the owner reviews and saves it.
  */
 
 export interface ExtractedRecipe {
   draft: RecipeDraft;
-  via: "json-ld" | "microdata" | "rdfa";
+  via: "json-ld" | "microdata" | "rdfa" | "wprm";
 }
 
 type JsonObject = Record<string, unknown>;
@@ -34,9 +37,13 @@ function emptyDraft(): RecipeDraft {
     category: null,
     tags: [],
     sourceUrl: null,
+    bookTitle: null,
+    bookAuthor: null,
+    bookPage: null,
     ingredients: [],
     steps: [],
     notesMarkdown: "",
+    stagedMedia: [],
   };
 }
 
@@ -230,6 +237,89 @@ function rdfaToDraft($: cheerio.CheerioAPI, sourceUrl: string | null): RecipeDra
   return draft;
 }
 
+/* ----------------------------- WP Recipe Maker ------------------------------- */
+
+/** Read a wprm time field: prefer the ISO `datetime` attr, then the text. */
+function wprmMinutes($: cheerio.CheerioAPI, scope: cheerio.Cheerio<AnyNode>, selector: string): number | null {
+  const el = scope.find(selector).first();
+  if (el.length === 0) return null;
+  const fromAttr = parseIsoDuration(el.attr("datetime"));
+  if (fromAttr !== null) return fromAttr;
+  return parseMinutesFromText(el.text());
+}
+
+/**
+ * WP Recipe Maker fallback: the plugin renders recipe data as plain HTML with
+ * `wprm-recipe` CSS classes (no JSON-LD/Microdata/RDFa). Returns null when the
+ * page has no `.wprm-recipe` container or the container has no title.
+ */
+function wprmToDraft($: cheerio.CheerioAPI, sourceUrl: string | null): RecipeDraft | null {
+  const scope = $(".wprm-recipe").first();
+  if (scope.length === 0) return null;
+
+  const draft = emptyDraft();
+  draft.title = sanitizeText(scope.find(".wprm-recipe-name").first().text()).slice(0, 200);
+  if (!draft.title) return null;
+
+  draft.description = sanitizeText(scope.find(".wprm-recipe-summary").first().text()).slice(0, 2000);
+  draft.notesMarkdown = sanitizeText(scope.find(".wprm-recipe-notes").first().text()).slice(0, 20_000);
+
+  // Ingredients: prefer the full <li> text through the shared parser (handles
+  // amounts, units, and trailing notes); fall back to assembling the
+  // amount/unit/name sub-spans when the full text fails to parse.
+  const ingredients: RecipeDraft["ingredients"] = [];
+  scope.find("li.wprm-recipe-ingredient").each((_, el) => {
+    const $li = $(el);
+    const fullText = sanitizeText($li.text());
+    const parsed = fullText ? parseIngredientLine(fullText) : null;
+    if (parsed) {
+      ingredients.push(parsed);
+      return;
+    }
+    const amount = sanitizeText($li.find(".wprm-recipe-ingredient-amount").first().text());
+    const unit = sanitizeText($li.find(".wprm-recipe-ingredient-unit").first().text());
+    const name = sanitizeText($li.find(".wprm-recipe-ingredient-name").first().text());
+    const assembled = parseIngredientLine(`${amount} ${unit} ${name}`.trim());
+    if (assembled) {
+      const note = sanitizeText($li.find(".wprm-recipe-ingredient-notes").first().text());
+      if (note && assembled.note === null) assembled.note = note.slice(0, 200);
+      ingredients.push(assembled);
+    }
+  });
+  draft.ingredients = ingredients.slice(0, 200);
+
+  const steps: string[] = [];
+  scope.find(".wprm-recipe-instruction-text").each((_, el) => {
+    const text = sanitizeText($(el).text());
+    if (text) steps.push(text);
+  });
+  draft.steps = steps.slice(0, 100);
+
+  const servingsEl = scope.find(".wprm-recipe-servings").first();
+  if (servingsEl.length > 0) {
+    draft.servings = parseServings(servingsEl.text()) ?? parseServings(servingsEl.attr("datetime")) ?? null;
+  }
+
+  draft.prepMinutes = wprmMinutes($, scope, ".wprm-recipe-prep-time");
+  draft.cookMinutes = wprmMinutes($, scope, ".wprm-recipe-cook-time");
+
+  const course = sanitizeText(scope.find(".wprm-recipe-course").first().text());
+  draft.category = course.slice(0, 60) || null;
+
+  const tags: string[] = [];
+  const keywords = sanitizeText(scope.find(".wprm-recipe-keywords").first().text());
+  if (keywords) tags.push(...keywords.split(","));
+  const cuisine = sanitizeText(scope.find(".wprm-recipe-cuisine").first().text());
+  if (cuisine) tags.push(cuisine);
+  draft.tags = tags
+    .map((t) => sanitizeText(t))
+    .filter(Boolean)
+    .slice(0, 20);
+
+  draft.sourceUrl = sourceUrl;
+  return draft;
+}
+
 /* --------------------------------- entry ------------------------------------ */
 
 /** Extract the best recipe draft from an HTML page. Returns null when none found. */
@@ -243,6 +333,8 @@ export function extractRecipeFromHtml(html: string, sourceUrl: string | null): E
   if (microdata) return { draft: microdata, via: "microdata" };
   const rdfa = rdfaToDraft($, sourceUrl);
   if (rdfa) return { draft: rdfa, via: "rdfa" };
+  const wprm = wprmToDraft($, sourceUrl);
+  if (wprm) return { draft: wprm, via: "wprm" };
   return null;
 }
 

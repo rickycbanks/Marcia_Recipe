@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { apiHandler, jsonOk, parseBody } from "@/lib/api";
 import { requireCapability } from "@/lib/authorization/guards";
+import { isMistralOcrConfigured } from "@/lib/imports/mistralOcr";
 import { parseOcrText } from "@/lib/imports/service";
 
 export const runtime = "nodejs";
@@ -16,4 +17,9 @@ export const POST = apiHandler(async (request) => {
   const owner = await requireCapability("recipes.import");
   const { text } = await parseBody(request, bodySchema);
   return jsonOk({ draft: parseOcrText(owner, text) });
+});
+
+/** Report which OCR engines are available for the import UI (no auth needed). */
+export const GET = apiHandler(async () => {
+  return jsonOk({ mistralEnabled: isMistralOcrConfigured() });
 });

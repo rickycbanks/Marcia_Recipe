@@ -104,6 +104,9 @@ export function ShoppingListView({ list }: Props) {
           <button type="button" className="btn-secondary text-sm" onClick={clearChecked} disabled={checkedCount === 0}>
             Clear checked
           </button>
+          <a href={`/api/shopping-lists/${list.id}/export`} className="btn-secondary text-sm">
+            Export
+          </a>
           <button type="button" className="btn-danger text-sm" onClick={deleteList}>
             Delete list
           </button>

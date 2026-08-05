@@ -8,6 +8,12 @@ const DEPENDENCIES: Record<string, string[]> = {
   "mealPlans.use": ["recipes.read"],
   "shoppingLists.use": ["recipes.read"],
 };
+const CAPABILITY_LABELS: Record<string, string> = {
+  "recipes.read": "Read recipes",
+  "mealPlans.use": "Use meal plans",
+  "shoppingLists.use": "Use shopping lists",
+};
+const capabilityLabel = (capability: string) => CAPABILITY_LABELS[capability] ?? "Additional access";
 
 interface InvitationRow {
   id: string;
@@ -81,7 +87,7 @@ export function InvitationsAdmin({ invitations }: { invitations: InvitationRow[]
               {ASSIGNABLE.map((cap) => (
                 <label key={cap} className="flex items-center gap-1.5 text-sm">
                   <input type="checkbox" checked={capabilities.includes(cap)} onChange={() => toggle(cap)} />
-                  {cap}
+                  {capabilityLabel(cap)}
                 </label>
               ))}
             </div>
@@ -151,7 +157,7 @@ export function InvitationsAdmin({ invitations }: { invitations: InvitationRow[]
               invitations.map((inv) => (
                 <tr key={inv.id}>
                   <td className="px-4 py-2.5">{new Date(inv.issuedAt).toLocaleDateString()}</td>
-                  <td className="px-4 py-2.5 text-xs">{inv.capabilities.join(", ")}</td>
+                  <td className="px-4 py-2.5 text-xs">{inv.capabilities.map(capabilityLabel).join(", ")}</td>
                   <td className="px-4 py-2.5">{new Date(inv.expiresAt).toLocaleDateString()}</td>
                   <td className="px-4 py-2.5">
                     <span className="badge">{inv.status}</span>

@@ -2,7 +2,7 @@
 export const SCHEMA_VERSIONS = {
   account: 1,
   invitation: 1,
-  recipe: 1,
+  recipe: 2,
   mealPlan: 1,
   shoppingList: 1,
   siteConfig: 1,
@@ -44,7 +44,7 @@ export const CAPABILITY_DEPENDENCIES: Partial<Record<Capability, Capability[]>> 
 
 export const VISIBILITIES = ["inherit", "public", "members", "owner"] as const;
 export const SITE_DEFAULT_VISIBILITIES = ["public", "members"] as const;
-export const THEMES = ["editorial", "warm", "ocean", "minimal"] as const;
+export const THEMES = ["editorial", "warm", "ocean", "minimal", "purple", "turquoise", "dusty-rose"] as const;
 export type ThemeName = (typeof THEMES)[number];
 
 export const MEAL_SLOTS = ["breakfast", "lunch", "dinner", "snack"] as const;
@@ -64,6 +64,13 @@ export const IMPORT_LIMITS = {
   maxRedirects: 3,
 } as const;
 
+/** Server-side Mistral OCR limits. */
+export const OCR_LIMITS = {
+  maxImageBytes: 10 * 1024 * 1024,
+  timeoutMs: 30_000,
+  allowedMimeTypes: ["image/png", "image/jpeg", "image/avif"] as const,
+} as const;
+
 /** Login throttling: maxAttempts per window, keyed by normalized username + client address. */
 export const LOGIN_RATE_LIMIT = { maxAttempts: 5, windowMs: 5 * 60 * 1000 } as const;
 /** Invitation-acceptance throttling keyed by client address. */
@@ -80,3 +87,6 @@ export const MAX_TAGS = 20;
 export const MAX_INGREDIENTS = 200;
 export const MAX_STEPS = 100;
 export const MAX_LIST_ITEMS = 500;
+export const BOOK_TITLE_MAX_LENGTH = 200;
+export const BOOK_AUTHOR_MAX_LENGTH = 120;
+export const BOOK_PAGE_MAX = 10000;

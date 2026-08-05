@@ -17,6 +17,7 @@ import { listMealPlans } from "@/lib/storage/repositories/mealPlans";
 import { listAccounts } from "@/lib/storage/repositories/accounts";
 import { canViewRecipe } from "@/lib/authorization/visibility";
 import { getSiteConfig } from "@/lib/storage/repositories/config";
+import { attachStagedMediaToRecipe } from "@/lib/media/service";
 
 /* ------------------------------ slug management ----------------------------- */
 
@@ -87,6 +88,9 @@ function materializeDraft(draft: RecipeDraft, base: Partial<Recipe> & { id: stri
     category: draft.category,
     tags: draft.tags,
     sourceUrl: draft.sourceUrl,
+    bookTitle: draft.bookTitle,
+    bookAuthor: draft.bookAuthor,
+    bookPage: draft.bookPage,
     ingredients: draft.ingredients.map((ingredient, order) => ({ id: newId(), order, ...ingredient })),
     steps: draft.steps.map((text, order) => ({ id: newId(), order, text })),
     notesMarkdown: draft.notesMarkdown,
@@ -102,7 +106,11 @@ export async function createRecipe(account: Account, draft: RecipeDraft): Promis
   if (account.type !== "owner") throw forbidden("Only the owner can manage recipes");
   return withWriteLock(async () => {
     const slug = await uniqueSlug(draft.slug ?? draft.title);
-    const recipe = materializeDraft(draft, { id: newId(), slug, createdAt: nowIso() });
+    const recipeId = newId();
+    // Attach any staged media under the same write lock so the recipe and its
+    // media appear atomically. Staged items missing from tmp/ are skipped.
+    const media = await attachStagedMediaToRecipe(recipeId, draft.stagedMedia, true);
+    const recipe = materializeDraft(draft, { id: recipeId, slug, createdAt: nowIso(), media });
     await saveRecipe(recipe);
     await rebuildSearchIndex();
     await audit({

@@ -139,6 +139,9 @@ export function MealPlanner({ weekId, slots, entries, availableRecipes, canGener
             </button>
           ) : null}
         </div>
+        <a href={`/api/meal-plans/${weekId}/export`} className="btn-secondary">
+          Export
+        </a>
       </div>
 
       {error ? (

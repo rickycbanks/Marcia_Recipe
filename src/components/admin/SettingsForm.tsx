@@ -6,12 +6,12 @@ import { useState, type FormEvent } from "react";
 interface Settings {
   siteName: string;
   defaultVisibility: "public" | "members";
-  theme: "editorial" | "warm" | "ocean" | "minimal";
+  theme: "editorial" | "warm" | "ocean" | "minimal" | "purple" | "turquoise" | "dusty-rose";
 }
 
 export function SettingsForm({ initial }: { initial: Settings }) {
   const router = useRouter();
-  const [form, setForm] = useState(initial);
+  const [form, setForm] = useState<Settings>(initial);
   const [status, setStatus] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
@@ -67,6 +67,9 @@ export function SettingsForm({ initial }: { initial: Settings }) {
           <option value="warm">Warm</option>
           <option value="ocean">Ocean</option>
           <option value="minimal">Minimal</option>
+          <option value="purple">Purple</option>
+          <option value="turquoise">Turquoise</option>
+          <option value="dusty-rose">Dusty Rose</option>
         </select>
       </div>
       {status ? <p className="text-sm text-accent">{status}</p> : null}

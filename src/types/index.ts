@@ -35,6 +35,22 @@ export type RecipeStep = Recipe["steps"][number];
 export type MediaItem = Recipe["media"][number];
 export type MealSlot = MealPlan["entries"][number]["slot"];
 
+/**
+ * A processed image held in tmp/staged-media until it is attached to a recipe
+ * at creation time. Mirrors MediaItem but omits ownerAccountId, which lives
+ * only in the sidecar JSON on disk.
+ */
+export interface StagedMediaItem {
+  id: string;
+  fileName: string;
+  alt: string;
+  width: number;
+  height: number;
+  bytes: number;
+  isPrimary: boolean;
+  createdAt: string;
+}
+
 /** The authenticated principal for the current request (never trusted from the JWT alone). */
 export interface SessionPrincipal {
   accountId: string;

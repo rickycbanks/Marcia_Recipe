@@ -13,7 +13,7 @@ export function defaultSiteConfig(): SiteConfig {
   return {
     schemaVersion: SCHEMA_VERSIONS.siteConfig,
     siteName: "Marcia Recipe",
-    defaultVisibility: "public",
+    defaultVisibility: "members",
     theme: "editorial",
     setupCompletedAt: null,
     createdAt: now,

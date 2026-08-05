@@ -41,27 +41,30 @@ function parseLeadingQuantity(text: string): { quantity: number | null; rest: st
   let quantity = 0;
   let found = false;
 
-  const numberMatch = /^(\d+(?:[.,]\d+)?)/.exec(rest);
-  if (numberMatch) {
-    quantity = parseFloat(numberMatch[1]!.replace(",", "."));
-    rest = rest.slice(numberMatch[0]!.length);
-    found = true;
-  }
-  const fractionMatch = /^[\s]*(\d+)\s*\/\s*(\d+)/.exec(rest);
+  // Pure or mixed fraction first: "1/4", "1 1/2", "3 1/4 cups".
+  const fractionMatch = /^(\d+)?\s*(\d+)\s*\/\s*(\d+)/.exec(rest);
   if (fractionMatch) {
-    const denom = Number(fractionMatch[2]!);
-    if (Number.isFinite(denom) && denom !== 0) {
-      quantity += Number(fractionMatch[1]!) / denom;
+    const denominator = Number(fractionMatch[3]!);
+    if (Number.isFinite(denominator) && denominator !== 0) {
+      quantity += Number(fractionMatch[1] ?? 0) + Number(fractionMatch[2]!) / denominator;
       rest = rest.slice(fractionMatch[0]!.length);
       found = true;
     }
-  } else {
-    const first = rest.trimStart().charAt(0);
-    if (first && first in UNICODE_FRACTIONS) {
-      quantity += UNICODE_FRACTIONS[first]!;
-      rest = rest.trimStart().slice(1);
+  }
+  if (!found) {
+    const numberMatch = /^(\d+(?:[.,]\d+)?)/.exec(rest);
+    if (numberMatch) {
+      quantity = parseFloat(numberMatch[1]!.replace(",", "."));
+      rest = rest.slice(numberMatch[0]!.length);
       found = true;
     }
+  }
+  // Unicode fraction, either alone ("½ cup") or trailing an integer ("1 ½ cups").
+  const first = rest.trimStart().charAt(0);
+  if (first && first in UNICODE_FRACTIONS) {
+    quantity += UNICODE_FRACTIONS[first]!;
+    rest = rest.trimStart().slice(1);
+    found = true;
   }
   return { quantity: found ? Math.round(quantity * 1000) / 1000 : null, rest: rest.trim() };
 }
@@ -112,6 +115,26 @@ export function parseIsoDuration(value: unknown): number | null {
   const seconds = Number(match[4] ?? 0);
   const total = days * 24 * 60 + hours * 60 + minutes + Math.round(seconds / 60);
   return total > 0 ? total : null;
+}
+
+/**
+ * Human-readable duration text ("10 minutes", "1 hour 30 minutes",
+ * "1 hr 15 min", "2 hours") → whole minutes. Null when nothing matches.
+ */
+export function parseMinutesFromText(text: string): number | null {
+  let total = 0;
+  let found = false;
+  const hourMatch = /(\d+)\s*(?:hrs?|hours?)\b/i.exec(text);
+  if (hourMatch && hourMatch[1] !== undefined) {
+    total += Number(hourMatch[1]) * 60;
+    found = true;
+  }
+  const minuteMatch = /(\d+)\s*(?:mins?|minutes?)\b/i.exec(text);
+  if (minuteMatch && minuteMatch[1] !== undefined) {
+    total += Number(minuteMatch[1]);
+    found = true;
+  }
+  return found ? total : null;
 }
 
 /** recipeYield can be a string, number, or array — extract a servings count. */

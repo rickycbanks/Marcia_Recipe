@@ -54,6 +54,18 @@ export const MIGRATIONS: Migration[] = [
       };
     },
   },
+  {
+    kind: "recipe",
+    fromVersion: 1,
+    description: "recipe v1 → v2: add book attribution fields (bookTitle, bookAuthor, bookPage)",
+    up: (doc) => ({
+      ...doc,
+      schemaVersion: 2,
+      bookTitle: null,
+      bookAuthor: null,
+      bookPage: null,
+    }),
+  },
 ];
 
 /** Ordered migrations needed to bring `kind` from `version` to current. */

@@ -1,14 +1,53 @@
+# Dependencies
 node_modules/
+
+# Next.js build output
 .next/
 out/
+
+# Test artifacts
 coverage/
 test-results/
 playwright-report/
+
+# Runtime data — never commit mutable app data
 data/
+data.locks/
 .e2e-data/
+
+# TypeScript build info
 *.tsbuildinfo
 next-env.d.ts
+
+# Generated service worker (built from src/app/sw.ts)
 public/sw.js
+
+# Secrets — never commit
 .env
 .env.local
+.env.*.local
+
+# OS / editor cruft
 .DS_Store
+Thumbs.db
+
+# Local-only scratch space
+local/
+.ignore
+
+# App scratch / upload temp (created at runtime under DATA_ROOT, but also
+# guard a stray top-level tmp/ if someone runs the app with DATA_ROOT=./tmp)
+/tmp/
+
+# OpenCode / tooling state
+.opencode/
+.slim/
+
+# Internal working notes (not user-facing docs)
+cleanup.md
+IMPLEMENTATION_PLAN.md
+todo.txt
+
+# Backups — only top-level, never match src/app/api/backups/ or src/lib/backups/
+/*.tar.gz
+/backups/

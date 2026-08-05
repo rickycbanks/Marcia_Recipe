@@ -22,6 +22,7 @@ export default async function AdminDashboardPage() {
     { href: "/admin/invitations", title: "Invitations", stat: `${pendingInvites} pending`, description: "Invite guests with chosen capabilities." },
     { href: "/admin/settings", title: "Settings", stat: "Site", description: "Site name, default visibility, theme." },
     { href: "/admin/backups", title: "Backups", stat: "Archives", description: "Create and download full-site backups." },
+    { href: "/admin/exports", title: "Exports", stat: "Markdown", description: "Download recipes, meal plans, and shopping lists as Markdown." },
   ];
 
   return (

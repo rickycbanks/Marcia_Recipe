@@ -139,6 +139,13 @@
   --danger-foreground: #1b0d0d;
 }
 
+[data-theme="purple"] { --font-display: Georgia, "Times New Roman", serif; --font-body: ui-sans-serif, system-ui, sans-serif; --background: #faf7ff; --foreground: #281d38; --card: #fff; --card-foreground: #281d38; --muted: #eee5fa; --muted-foreground: #746384; --accent: #7448a8; --accent-foreground: #fffaff; --border: #ddcfee; --danger: #b33b55; --danger-foreground: #fff5f7; }
+[data-theme="purple"][data-mode="dark"] { --background: #1d1428; --foreground: #f0e8fa; --card: #281b36; --card-foreground: #f0e8fa; --muted: #3a2950; --muted-foreground: #c1acd5; --accent: #b98ae5; --accent-foreground: #241330; --border: #503a67; --danger: #f08a9c; --danger-foreground: #32101a; }
+[data-theme="turquoise"] { --font-display: "Trebuchet MS", ui-rounded, sans-serif; --font-body: ui-sans-serif, system-ui, sans-serif; --background: #f2fbfa; --foreground: #123333; --card: #fff; --card-foreground: #123333; --muted: #dff2ef; --muted-foreground: #527674; --accent: #087f7b; --accent-foreground: #f1fffd; --border: #c5e4e0; --danger: #bd3e4e; --danger-foreground: #fff5f5; }
+[data-theme="turquoise"][data-mode="dark"] { --background: #0d2020; --foreground: #dcf3f0; --card: #14302f; --card-foreground: #dcf3f0; --muted: #204644; --muted-foreground: #9fc9c4; --accent: #55c8c0; --accent-foreground: #082524; --border: #2c5b58; --danger: #ef8290; --danger-foreground: #351016; }
+[data-theme="dusty-rose"] { --font-display: Georgia, "Times New Roman", serif; --font-body: ui-sans-serif, system-ui, sans-serif; --background: #fff8f7; --foreground: #382326; --card: #fff; --card-foreground: #382326; --muted: #f5e5e3; --muted-foreground: #87666a; --accent: #a85669; --accent-foreground: #fff8f8; --border: #e8ccce; --danger: #b33c45; --danger-foreground: #fff5f5; }
+[data-theme="dusty-rose"][data-mode="dark"] { --background: #28191d; --foreground: #f8e7e7; --card: #382126; --card-foreground: #f8e7e7; --muted: #513037; --muted-foreground: #d0aeb0; --accent: #df8d9f; --accent-foreground: #35151d; --border: #684047; --danger: #f18b8f; --danger-foreground: #3a1215; }
+
 @layer base {
   html {
     color-scheme: light;
@@ -179,5 +186,17 @@
   }
   .badge {
     @apply inline-flex items-center rounded-full bg-muted px-2.5 py-0.5 text-xs font-medium text-muted-foreground;
+  }
+  .section-heading {
+    @apply text-xs font-semibold uppercase tracking-wide text-muted-foreground;
+  }
+  .help-text {
+    @apply text-xs text-muted-foreground;
+  }
+  .form-action-bar {
+    @apply sticky bottom-0 z-30 border-t border-border bg-card/95 px-4 py-3 shadow-lg backdrop-blur;
+  }
+  .drag-handle {
+    @apply inline-flex cursor-grab items-center justify-center rounded-md px-1 py-2 text-muted-foreground hover:text-foreground active:cursor-grabbing;
   }
 }

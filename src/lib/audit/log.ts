@@ -2,6 +2,7 @@ import { appendFile, mkdir, readdir, stat, unlink } from "node:fs/promises";
 import { join } from "node:path";
 import type { AuditEvent } from "@/types";
 import { logger } from "@/lib/logger";
+import { withLock } from "@/lib/storage/lock";
 import { resolveWithin } from "@/lib/storage/paths";
 
 /** Bounded rotation: monthly files, keep the most recent N. */
@@ -19,10 +20,12 @@ function auditFileName(date = new Date()): string {
  */
 export async function audit(event: Omit<AuditEvent, "at">): Promise<void> {
   try {
-    const dir = resolveWithin("audit");
-    await mkdir(dir, { recursive: true });
-    const line = JSON.stringify({ ...event, at: new Date().toISOString() }) + "\n";
-    await appendFile(join(dir, auditFileName()), line, "utf8");
+    await withLock("root-swap", async () => {
+      const dir = resolveWithin("audit");
+      await mkdir(dir, { recursive: true });
+      const line = JSON.stringify({ ...event, at: new Date().toISOString() }) + "\n";
+      await appendFile(join(dir, auditFileName()), line, "utf8");
+    });
   } catch (err) {
     // Auditing must never break the operation being audited.
     logger.error("Failed to write audit event", { type: event.type, error: String(err) });

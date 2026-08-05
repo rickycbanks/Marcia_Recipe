@@ -1,12 +1,25 @@
+import Link from "next/link";
 import { notFound, permanentRedirect } from "next/navigation";
 import { MarkdownView } from "@/components/MarkdownView";
 import { getSessionAccount } from "@/lib/authorization/guards";
+import { hasCapability } from "@/lib/authorization/capabilities";
 import { resolveVisibility } from "@/lib/authorization/visibility";
 import { getVisibleRecipeBySlug } from "@/lib/recipes/service";
 import { getSiteConfig } from "@/lib/storage/repositories/config";
 import { formatQuantity } from "@/lib/shopping-lists/aggregate";
 
 export const dynamic = "force-dynamic";
+
+/**
+ * If the markdown begins with an h1 or h2 that matches the provided section
+ * title, drop it. The section already renders its own heading, so repeating it
+ * would show "Notes" twice (or similar for other sections).
+ */
+function stripLeadingHeading(markdown: string, title: string): string {
+  const escaped = title.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  const re = new RegExp(`^\\s*(?:#{1,2})\\s+${escaped}\\s*\\n+`, "i");
+  return markdown.replace(re, "");
+}
 
 interface Props {
   params: Promise<{ slug: string }>;
@@ -45,7 +58,24 @@ export default async function RecipeDetailPage({ params }: Props) {
             <span className="badge">visibility: {resolveVisibility(recipe, config)}</span>
           ) : null}
         </div>
-        <h1 className="font-display text-4xl font-bold leading-tight">{recipe.title}</h1>
+        <div className="flex flex-wrap items-start justify-between gap-4">
+          <h1 className="font-display text-4xl font-bold leading-tight">{recipe.title}</h1>
+          <div className="flex w-full shrink-0 flex-wrap items-start gap-2 sm:w-auto">
+            {hasCapability(account, "recipes.manage") ? (
+              <Link href="/admin/recipes/new" className="btn-primary">
+                + New recipe
+              </Link>
+            ) : null}
+            {hasCapability(account, "recipes.manage") ? (
+              <Link href={`/admin/recipes/${recipe.id}/edit`} className="btn-secondary">
+                Edit
+              </Link>
+            ) : null}
+            <a href={`/api/recipes/${recipe.id}/export`} className="btn-secondary shrink-0">
+              Export
+            </a>
+          </div>
+        </div>
         {recipe.description ? <p className="text-lg text-muted-foreground">{recipe.description}</p> : null}
         <dl className="flex flex-wrap gap-x-6 gap-y-1 text-sm text-muted-foreground">
           {recipe.prepMinutes !== null ? (
@@ -76,6 +106,16 @@ export default async function RecipeDetailPage({ params }: Props) {
             <div className="flex gap-1">
               <dt className="font-medium">Difficulty:</dt>
               <dd className="capitalize">{recipe.difficulty}</dd>
+            </div>
+          ) : null}
+          {recipe.bookTitle || recipe.bookAuthor || recipe.bookPage !== null ? (
+            <div className="flex gap-1">
+              <dt className="font-medium">Book:</dt>
+              <dd>
+                {[recipe.bookTitle, recipe.bookAuthor, recipe.bookPage !== null ? `p. ${recipe.bookPage}` : null]
+                  .filter((part): part is string => !!part)
+                  .join(" · ")}
+              </dd>
             </div>
           ) : null}
         </dl>
@@ -109,7 +149,7 @@ export default async function RecipeDetailPage({ params }: Props) {
         </ul>
       ) : null}
 
-      <section aria-label="Ingredients" className="card p-6">
+      <section className="card p-6">
         <h2 className="mb-3 font-display text-2xl font-semibold">Ingredients</h2>
         <ul className="flex flex-col gap-1.5">
           {[...recipe.ingredients]
@@ -146,9 +186,9 @@ export default async function RecipeDetailPage({ params }: Props) {
       </section>
 
       {recipe.notesMarkdown.trim() ? (
-        <section aria-label="Notes" className="card p-6">
+        <section className="card p-6">
           <h2 className="mb-3 font-display text-2xl font-semibold">Notes</h2>
-          <MarkdownView markdown={recipe.notesMarkdown} />
+          <MarkdownView markdown={stripLeadingHeading(recipe.notesMarkdown, "Notes")} />
         </section>
       ) : null}
 

@@ -1,5 +1,8 @@
 import { z } from "zod";
 import {
+  BOOK_AUTHOR_MAX_LENGTH,
+  BOOK_PAGE_MAX,
+  BOOK_TITLE_MAX_LENGTH,
   DESCRIPTION_MAX_LENGTH,
   DISPLAY_NAME_MAX_LENGTH,
   GUEST_CAPABILITIES,
@@ -126,9 +129,18 @@ export const mediaItemSchema = z.object({
   createdAt: isoDateTimeSchema,
 });
 
+/**
+ * Server-generated sidecar for a staged (not yet attached) media upload.
+ * Short-lived scratch metadata kept beside the .webp in tmp/staged-media;
+ * swept by cleanupOrphanedTmpFiles after the TTL.
+ */
+export const stagedMediaItemSchema = mediaItemSchema.extend({
+  ownerAccountId: uuidSchema,
+});
+
 export const recipeSchema = z
   .object({
-    schemaVersion: z.literal(1),
+    schemaVersion: z.literal(2),
     id: uuidSchema,
     slug: slugSchema,
     previousSlugs: z.array(slugSchema),
@@ -142,6 +154,9 @@ export const recipeSchema = z
     category: z.string().trim().max(60).nullable(),
     tags: z.array(z.string().trim().min(1).max(40)).max(MAX_TAGS),
      sourceUrl: httpUrlSchema.nullable(),
+    bookTitle: z.string().trim().max(BOOK_TITLE_MAX_LENGTH).nullable(),
+    bookAuthor: z.string().trim().max(BOOK_AUTHOR_MAX_LENGTH).nullable(),
+    bookPage: z.number().int().positive().max(BOOK_PAGE_MAX).nullable(),
     ingredients: z.array(ingredientSchema).max(MAX_INGREDIENTS),
     steps: z.array(recipeStepSchema).max(MAX_STEPS),
     notesMarkdown: z.string().max(20_000),
@@ -177,6 +192,9 @@ export const recipeDraftSchema = z.object({
   category: z.string().trim().max(60).nullable().default(null),
   tags: z.array(z.string().trim().min(1).max(40)).max(MAX_TAGS).default([]),
   sourceUrl: httpUrlSchema.nullable().default(null),
+  bookTitle: z.string().trim().max(BOOK_TITLE_MAX_LENGTH).nullable().default(null),
+  bookAuthor: z.string().trim().max(BOOK_AUTHOR_MAX_LENGTH).nullable().default(null),
+  bookPage: z.number().int().positive().max(BOOK_PAGE_MAX).nullable().default(null),
   ingredients: z
     .array(
       z.object({
@@ -190,6 +208,8 @@ export const recipeDraftSchema = z.object({
     .default([]),
   steps: z.array(z.string().trim().min(1).max(2000)).max(MAX_STEPS).default([]),
   notesMarkdown: z.string().max(20_000).default(""),
+  /** Staged media ids (from tmp/staged-media) to attach atomically on create. */
+  stagedMedia: z.array(uuidSchema).optional().default([]),
 });
 
 /* --------------------------------- meal plan --------------------------------- */
@@ -267,6 +287,10 @@ export const searchIndexEntrySchema = z.object({
   visibility: z.enum(VISIBILITIES),
   archived: z.boolean(),
   primaryMediaId: uuidSchema.nullable(),
+  prepMinutes: z.number().int().nonnegative().nullable(),
+  cookMinutes: z.number().int().nonnegative().nullable(),
+  totalMinutes: z.number().int().nonnegative().nullable(),
+  difficulty: z.enum(["easy", "medium", "hard"]).nullable(),
 });
 
 export const searchIndexSchema = z.object({
@@ -301,6 +325,8 @@ export const AUDIT_EVENT_TYPES = [
   "import.performed",
   "backup.created",
   "backup.restored",
+  "backup.restore.failed",
+  "backup.restore.recovered",
   "migration.applied",
   "settings.updated",
 ] as const;

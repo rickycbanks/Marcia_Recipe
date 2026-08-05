@@ -131,13 +131,21 @@ function pinnedAgent(lookupFn: typeof dnsLookup): Agent {
     headersTimeout: IMPORT_LIMITS.timeoutMs,
     bodyTimeout: IMPORT_LIMITS.timeoutMs,
     connect: {
-      lookup: (hostname, _options, callback) => {
+      lookup: (hostname, options, callback) => {
         resolvePublicAddresses(hostname, lookupFn)
           .then((addresses) => {
+            // undici passes `all: true` in the lookup options and expects the
+            // array form (err, addresses[]); the single-address form
+            // (err, address, family) is misread as an array and yields
+            // ERR_INVALID_IP_ADDRESS: Invalid IP address: undefined.
+            if ((options as { all?: boolean } | undefined)?.all) {
+              callback(null, addresses);
+              return;
+            }
             const first = addresses[0]!;
             callback(null, first.address, first.family);
           })
-          .catch((err) => callback(err as Error, "", 0));
+          .catch((err) => callback(err as Error, [], 0));
       },
     },
   });

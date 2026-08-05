@@ -52,7 +52,7 @@ export function MediaManager({ recipeId, media }: Props) {
   };
 
   return (
-    <div className="card flex flex-col gap-3 p-4">
+    <div id="photos" className="card flex scroll-mt-24 flex-col gap-3 p-4">
       <h3 className="font-display text-lg font-semibold">Photos</h3>
       {media.length > 0 ? (
         <ul className="grid grid-cols-3 gap-2 sm:grid-cols-4">

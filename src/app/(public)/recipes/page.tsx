@@ -3,6 +3,7 @@ import { SearchBox } from "@/components/SearchBox";
 import { EmptyState } from "@/components/EmptyState";
 import Link from "next/link";
 import { getSessionAccount } from "@/lib/authorization/guards";
+import { hasCapability } from "@/lib/authorization/capabilities";
 import { canViewRecipe } from "@/lib/authorization/visibility";
 import { getSearchIndex } from "@/lib/storage/indexes";
 import { getSiteConfig } from "@/lib/storage/repositories/config";
@@ -38,7 +39,14 @@ export default async function RecipesPage({ searchParams }: Props) {
     <div className="flex flex-col gap-6">
       <div className="flex flex-wrap items-center justify-between gap-4">
         <h1 className="font-display text-3xl font-bold">Recipes</h1>
-        <SearchBox />
+        <div className="flex w-full flex-wrap items-center justify-end gap-2 sm:w-auto">
+          <SearchBox />
+          {hasCapability(account, "recipes.manage") ? (
+            <Link href="/admin/recipes/new" className="btn-primary">
+              + New recipe
+            </Link>
+          ) : null}
+        </div>
       </div>
 
       {categories.length > 0 || tags.length > 0 ? (
