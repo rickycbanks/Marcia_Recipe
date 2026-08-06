@@ -150,6 +150,26 @@ function jsonLdToDraft(node: JsonObject, sourceUrl: string | null): RecipeDraft 
   return draft;
 }
 
+/**
+ * Score JSON-LD drafts by recipe evidence rather than title presence alone.
+ * Ingredient and instruction counts are the strongest signals; metadata helps
+ * distinguish otherwise similarly complete candidates.
+ */
+function jsonLdCandidateQuality(draft: RecipeDraft): number | null {
+  if (!draft.title || (draft.ingredients.length === 0 && draft.steps.length === 0)) return null;
+
+  return (
+    draft.ingredients.length * 10 +
+    draft.steps.length * 10 +
+    (draft.prepMinutes !== null ? 2 : 0) +
+    (draft.cookMinutes !== null ? 2 : 0) +
+    (draft.servings !== null ? 2 : 0) +
+    (draft.description ? 1 : 0) +
+    (draft.category ? 1 : 0) +
+    (draft.tags.length > 0 ? 1 : 0)
+  );
+}
+
 /* ------------------------------- microdata ---------------------------------- */
 
 function propTexts($: cheerio.CheerioAPI, scope: cheerio.Cheerio<AnyNode>, prop: string): string[] {
@@ -325,9 +345,16 @@ function wprmToDraft($: cheerio.CheerioAPI, sourceUrl: string | null): RecipeDra
 /** Extract the best recipe draft from an HTML page. Returns null when none found. */
 export function extractRecipeFromHtml(html: string, sourceUrl: string | null): ExtractedRecipe | null {
   const $ = cheerio.load(html);
+  let bestJsonLd: { draft: RecipeDraft; quality: number } | null = null;
   for (const node of findJsonLdRecipes($)) {
     const draft = jsonLdToDraft(node, sourceUrl);
-    if (draft.title) return { draft, via: "json-ld" };
+    const quality = jsonLdCandidateQuality(draft);
+    if (quality !== null && (bestJsonLd === null || quality > bestJsonLd.quality)) {
+      bestJsonLd = { draft, quality };
+    }
+  }
+  if (bestJsonLd) {
+    return { draft: bestJsonLd.draft, via: "json-ld" };
   }
   const microdata = microdataToDraft($, sourceUrl);
   if (microdata) return { draft: microdata, via: "microdata" };
@@ -337,4 +364,3 @@ export function extractRecipeFromHtml(html: string, sourceUrl: string | null): E
   if (wprm) return { draft: wprm, via: "wprm" };
   return null;
 }
-
