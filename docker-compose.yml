@@ -1,7 +1,7 @@
 services:
   app:
     build: .
-    image: marcia-recipe:local
+    image: marcia-recipe:personal
     restart: unless-stopped
     ports:
       - "3000:3000"
@@ -9,12 +9,12 @@ services:
       NODE_ENV: production
       HOSTNAME: 0.0.0.0
       PORT: 3000
-      DATA_ROOT: /data/marcia-recipe
+      DATA_ROOT: /data/personal
       AUTH_SECRET: ${AUTH_SECRET:?Set AUTH_SECRET in .env}
       SETUP_TOKEN: ${SETUP_TOKEN:?Set SETUP_TOKEN in .env}
       APP_ORIGIN: ${APP_ORIGIN:-http://localhost:3000}
     volumes:
-      - marcia_recipe_data:/data/marcia-recipe
+      - marcia_personal_data:/data
     healthcheck:
       test:
         - CMD
@@ -27,4 +27,4 @@ services:
       start_period: 20s
 
 volumes:
-  marcia_recipe_data:
+  marcia_personal_data:
