@@ -19,13 +19,18 @@ const envSchema = z.object({
   SETUP_TOKEN: z.string().min(8).optional(),
   /** Public origin of the deployment (used in logs/invitation URLs only). */
   APP_ORIGIN: z.url().optional(),
+  /** Canonical public URL used by Auth.js for callbacks and redirects. */
+  AUTH_URL: z.url().optional(),
   LOG_LEVEL: z.enum(["debug", "info", "warn", "error"]).optional(),
   /**
    * Optional Mistral AI API key. When set, server-side Mistral OCR is enabled
    * as an alternative to the browser-side Tesseract.js OCR for recipe imports.
    * Leave unset to disable server-side OCR.
    */
-  MISTRAL_API_KEY: z.string().min(10).optional(),
+  MISTRAL_API_KEY: z.preprocess(
+    (value) => (typeof value === "string" ? value.trim() || undefined : value),
+    z.string().min(10).optional(),
+  ),
 });
 
 export type AppEnv = z.infer<typeof envSchema> & { authSecret: string };
