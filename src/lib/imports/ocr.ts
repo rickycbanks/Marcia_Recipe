@@ -21,7 +21,7 @@ const SECTION_NOISE = /^\s*(notes?|tips?|variations?|nutrition|servings?|prep(ar
 const MARKDOWN_HEADING = /^#/;
 const MARKDOWN_BULLET = /^[-*+]\s+/;
 const MARKDOWN_NUMBERED = /^(?:\d+|[IVXLCDM]+)\.\s+/i;
-const MARKDOWN_RULE = /^[-*+_]{3,}\s*$/;
+const MARKDOWN_RULE = /^(?:[-*+_]\s*){3,}$/;
 const TIME_LABEL = /^(?:prep(?:aration)?|cook(?:ing)?|total)\b/i;
 const SERVING_LABEL = /^(?:makes|serves|servings?|yield|yields?)\b/i;
 const NOTES_MARKER = /^(?:variation|notes?|tips?)\s*:/i;
@@ -78,6 +78,21 @@ function markdownMetadataValue(line: string, label: MarkdownMetadata): string {
   };
   const match = patterns[label].exec(text);
   return match ? text.slice(match[0].length).replace(/^\s*:\s*/, "").trim() : "";
+}
+
+/** Replace only standard Markdown inline links with their visible label. */
+function normalizeMarkdownInlineLinks(text: string): string {
+  return text.replace(/\[([^\]]+)\]\([^)]*\)/g, " $1");
+}
+
+function parseMarkdownIngredientLine(line: string): ReturnType<typeof parseIngredientLine> {
+  return parseIngredientLine(normalizeMarkdownInlineLinks(line));
+}
+
+/** Strip the transport wrapper's generic title label without altering recipe names. */
+function normalizeMarkdownTitle(line: string): string {
+  const text = sanitizeText(line.replace(/^#+\s*/, ""));
+  return text.replace(/^title\s*:\s*/i, "");
 }
 
 /**
@@ -330,7 +345,7 @@ function parseRecipeMarkdown(lines: string[]): RecipeDraft {
   let titleLine: string | null = null;
   if (heading) {
     titleLine = heading;
-    draft.title = sanitizeText(heading.replace(/^#+\s*/, "")).slice(0, 200);
+    draft.title = normalizeMarkdownTitle(heading).slice(0, 200);
   } else {
     const fallback = lines.find(
       (line) =>
@@ -341,7 +356,7 @@ function parseRecipeMarkdown(lines: string[]): RecipeDraft {
         classifyMarkdownSection(line) === null,
     );
     titleLine = fallback ?? null;
-    draft.title = titleLine ? sanitizeText(titleLine).slice(0, 200) : "";
+    draft.title = titleLine ? normalizeMarkdownTitle(titleLine).slice(0, 200) : "";
   }
 
   const ingredientLines: string[] = [];
@@ -366,7 +381,10 @@ function parseRecipeMarkdown(lines: string[]): RecipeDraft {
 
   for (const line of lines) {
     if (titleLine && line === titleLine) continue;
-    if (MARKDOWN_RULE.test(line)) continue;
+    if (MARKDOWN_RULE.test(line)) {
+      if (phase === "preamble") allowPreambleIngredientBullets = true;
+      continue;
+    }
     if (MARKDOWN_HEADING.test(line)) {
       pendingMetadata = null;
       const section = classifyMarkdownSection(line);
@@ -402,7 +420,8 @@ function parseRecipeMarkdown(lines: string[]): RecipeDraft {
     if (pendingMetadata) {
       const label = pendingMetadata;
       pendingMetadata = null;
-      if (applyMetadataValue(label, line)) continue;
+      const pendingValue = MARKDOWN_BULLET.test(line) ? line.replace(/^[-*+]\s+/, "") : line;
+      if (markdownMetadataLabel(pendingValue) === null && applyMetadataValue(label, pendingValue)) continue;
     }
 
     if (NOTES_MARKER.test(line)) {
@@ -442,12 +461,18 @@ function parseRecipeMarkdown(lines: string[]): RecipeDraft {
 
     if (MARKDOWN_BULLET.test(line)) {
       const bulletText = line.replace(/^[-*+]\s+/, "");
+      const metadataLabel = markdownMetadataLabel(bulletText);
+      if (metadataLabel) {
+        const metadataValue = markdownMetadataValue(bulletText, metadataLabel);
+        if (!applyMetadataValue(metadataLabel, metadataValue)) pendingMetadata = metadataLabel;
+        continue;
+      }
       if (phase === "ingredients") {
         ingredientLines.push(bulletText);
       } else if (phase === "preamble" && allowPreambleIngredientBullets) {
         // Heading-less OCR often starts with ingredient bullets, but a
         // descriptive/list bullet must never become an ingredient by itself.
-        const parsed = parseIngredientLine(bulletText);
+        const parsed = parseMarkdownIngredientLine(bulletText);
         if (parsed && parsed.quantity !== null) {
           phase = "ingredients";
           ingredientLines.push(bulletText);
@@ -480,7 +505,7 @@ function parseRecipeMarkdown(lines: string[]): RecipeDraft {
     if (phase === "preamble") {
       // A plain line that parses as an ingredient starts the ingredient block
       // (Mistral often omits bullet markers); otherwise it's description text.
-      const parsed = parseIngredientLine(line);
+      const parsed = parseMarkdownIngredientLine(line);
       if (parsed && parsed.quantity !== null) {
         phase = "ingredients";
         ingredientLines.push(line);
@@ -492,7 +517,7 @@ function parseRecipeMarkdown(lines: string[]): RecipeDraft {
     if (phase === "ingredients") {
       // Mistral may emit some ingredient lines without bullet markers; keep
       // any quantity-led line that the ingredient parser understands.
-      const parsed = parseIngredientLine(line);
+      const parsed = parseMarkdownIngredientLine(line);
       if (parsed && parsed.quantity !== null) ingredientLines.push(line);
       continue;
     }
@@ -507,7 +532,7 @@ function parseRecipeMarkdown(lines: string[]): RecipeDraft {
   if (draft.cookMinutes === null && totalMinutes !== null) draft.cookMinutes = totalMinutes;
   draft.description = preamble.join(" ").slice(0, 2000);
   draft.ingredients = ingredientLines
-    .map(parseIngredientLine)
+    .map(parseMarkdownIngredientLine)
     .filter((ingredient): ingredient is NonNullable<typeof ingredient> => ingredient !== null)
     .slice(0, 200);
   draft.steps = numbered

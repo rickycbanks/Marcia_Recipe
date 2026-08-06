@@ -207,4 +207,38 @@ Short description.
     expect(draft.title).toBe("Orchard Skillet Cakes");
     expect(draft.title).not.toBe("Description");
   });
+
+  it("parses divider-delimited Jina markdown without inventing servings", () => {
+    const markdown = `Title: Orchard Skillet Cakes
+URL Source: https://example.test/pancakes
+Markdown Content:
+### Description
+A short pancake description.
+* * *
+**Pancakes**
+* 3/4 cup [full fat coconut milk](https://example.test/coconut)
+* 1 tsp vanilla extract
+* 1 medium banana
+* coconut oil for frying
+* * *
+1. Combine the ingredients.
+2. Heat a skillet.
+3. Cook the cakes.
+### Notes
+* Serve warm.
+* Prep Time:10 minutes
+* Cook Time:20 minutes`;
+
+    const draft = parseRecipeText(markdown);
+
+    expect(draft.title).toBe("Orchard Skillet Cakes");
+    expect(draft.prepMinutes).toBe(10);
+    expect(draft.cookMinutes).toBe(20);
+    expect(draft.servings).toBeNull();
+    expect(draft.ingredients).toHaveLength(4);
+    expect(draft.ingredients).toContainEqual({ quantity: 0.75, unit: "cup", name: "full fat coconut milk", note: null });
+    expect(draft.steps).toHaveLength(3);
+    expect(draft.steps).not.toContain("Prep Time:10 minutes");
+    expect(draft.steps).not.toContain("Cook Time:20 minutes");
+  });
 });
