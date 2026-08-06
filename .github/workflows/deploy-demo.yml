@@ -20,11 +20,18 @@ jobs:
           host: ${{ secrets.OCI_HOST }}
           username: ${{ secrets.OCI_USER }}
           key: ${{ secrets.OCI_SSH_KEY }}
+          envs: |
+            OCR_API_KEY
           script: |
             cd ~/marcia-recipe-demo
             git fetch origin for_demo
             git checkout for_demo
             git reset --hard origin/for_demo
+            # Inject the Mistral OCR key into .env (app expects MISTRAL_API_KEY)
+            if [ -n "$OCR_API_KEY" ]; then
+              sed -i '/^MISTRAL_API_KEY=/d' .env
+              echo "MISTRAL_API_KEY=$OCR_API_KEY" >> .env
+            fi
             docker compose build
             docker compose up -d
             sleep 10
