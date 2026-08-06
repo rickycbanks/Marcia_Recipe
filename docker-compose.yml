@@ -13,6 +13,9 @@ services:
       AUTH_SECRET: ${AUTH_SECRET:?Set AUTH_SECRET in .env}
       SETUP_TOKEN: ${SETUP_TOKEN:?Set SETUP_TOKEN in .env}
       APP_ORIGIN: ${APP_ORIGIN:-http://localhost:3000}
+      AUTH_URL: ${AUTH_URL:-${APP_ORIGIN:-http://localhost:3000}}
+      NEXTAUTH_URL: ${AUTH_URL:-${APP_ORIGIN:-http://localhost:3000}}
+      MISTRAL_API_KEY: ${MISTRAL_API_KEY:-}
     volumes:
       - marcia_personal_data:/data
     healthcheck:
