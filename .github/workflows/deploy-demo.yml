@@ -36,4 +36,8 @@ jobs:
             docker compose up -d
             sleep 10
             curl -sf http://127.0.0.1:3001/api/health || (echo "HEALTH CHECK FAILED" && exit 1)
-            echo "Demo deploy complete"
+            # Reset demo data to seed state (wipes any changes, restores 8 recipes + owner)
+            sudo /opt/demo-reset.sh
+            sleep 5
+            curl -sf http://127.0.0.1:3001/api/health || (echo "HEALTH CHECK FAILED AFTER RESET" && exit 1)
+            echo "Demo deploy + reset complete"
