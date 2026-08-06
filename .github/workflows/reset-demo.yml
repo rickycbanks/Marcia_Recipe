@@ -1,0 +1,22 @@
+name: Reset Demo
+
+on:
+  schedule:
+    - cron: '0 * * * *'   # hourly at :00 UTC
+  workflow_dispatch:
+
+jobs:
+  reset:
+    runs-on: ubuntu-latest
+    environment: demo
+    steps:
+      - name: Reset demo from seed
+        uses: appleboy/ssh-action@v1
+        with:
+          host: ${{ secrets.OCI_HOST }}
+          username: ${{ secrets.OCI_USER }}
+          key: ${{ secrets.OCI_SSH_KEY }}
+          script: |
+            sudo /opt/demo-reset.sh
+            curl -sf http://127.0.0.1:3001/api/health || (echo "HEALTH CHECK FAILED" && exit 1)
+            echo "Demo reset complete"

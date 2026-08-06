@@ -1,0 +1,32 @@
+name: Deploy Personal
+
+on:
+  push:
+    branches: [for_personal]
+  workflow_dispatch:
+
+concurrency:
+  group: deploy-personal
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment: personal
+    steps:
+      - name: Deploy over SSH
+        uses: appleboy/ssh-action@v1
+        with:
+          host: ${{ secrets.OCI_HOST }}
+          username: ${{ secrets.OCI_USER }}
+          key: ${{ secrets.OCI_SSH_KEY }}
+          script: |
+            cd ~/marcia-recipe
+            git fetch origin for_personal
+            git checkout for_personal
+            git reset --hard origin/for_personal
+            docker compose build
+            docker compose up -d
+            sleep 10
+            curl -sf http://127.0.0.1:3000/api/health || (echo "HEALTH CHECK FAILED" && exit 1)
+            echo "Personal deploy complete"

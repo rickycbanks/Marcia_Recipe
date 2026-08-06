@@ -1,0 +1,32 @@
+name: Deploy Demo
+
+on:
+  push:
+    branches: [for_demo]
+  workflow_dispatch:
+
+concurrency:
+  group: deploy-demo
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment: demo
+    steps:
+      - name: Deploy over SSH
+        uses: appleboy/ssh-action@v1
+        with:
+          host: ${{ secrets.OCI_HOST }}
+          username: ${{ secrets.OCI_USER }}
+          key: ${{ secrets.OCI_SSH_KEY }}
+          script: |
+            cd ~/marcia-recipe-demo
+            git fetch origin for_demo
+            git checkout for_demo
+            git reset --hard origin/for_demo
+            docker compose build
+            docker compose up -d
+            sleep 10
+            curl -sf http://127.0.0.1:3001/api/health || (echo "HEALTH CHECK FAILED" && exit 1)
+            echo "Demo deploy complete"
