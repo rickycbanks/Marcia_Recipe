@@ -27,6 +27,59 @@ const SERVING_LABEL = /^(?:makes|serves|servings?|yield|yields?)\b/i;
 const NOTES_MARKER = /^(?:variation|notes?|tips?)\s*:/i;
 const BARE_TIME = /\d+\s*(?:hrs?|hours?|mins?|minutes?)\b/i;
 
+type MarkdownSection = "preamble" | "ingredients" | "steps" | "notes" | "nutrition" | "metadata";
+type MarkdownMetadata = "prep" | "cook" | "total" | "servings";
+
+/** Normalize heading/section text before comparing it with generic labels. */
+function normalizeMarkdownHeadingText(line: string): string {
+  return sanitizeText(line.replace(/^#+\s*/, ""))
+    .toLowerCase()
+    .replace(/\s+/g, " ")
+    .replace(/\s*:\s*$/, "");
+}
+
+/** Classify generic markdown sections so labels are not mistaken for titles. */
+function classifyMarkdownSection(line: string): MarkdownSection | null {
+  const text = normalizeMarkdownHeadingText(line);
+  if (/^(?:description|about)(?:\b|:)/.test(text)) return "preamble";
+  if (/^(?:ingredients?|what you(?:'|’)ll need|you will need)(?:\b|:)/.test(text)) return "ingredients";
+  if (/^(?:instructions?|directions?|method|preparation|steps|how to (?:make|prepare|cook))(?:\b|:)/.test(text)) {
+    return "steps";
+  }
+  if (/^(?:notes?|tips?|variations?)(?:\b|:)/.test(text)) return "notes";
+  if (/^nutrition(?:\b|:)/.test(text)) return "nutrition";
+  if (
+    /^(?:prep(?:aration)?(?:\s+time)?|cook(?:ing)?(?:\s+time)?|total(?:\s+time)?|yields?|servings?|makes|serves)(?:\b|:)/.test(
+      text,
+    )
+  ) {
+    return "metadata";
+  }
+  return null;
+}
+
+function markdownMetadataLabel(line: string): MarkdownMetadata | null {
+  const text = normalizeMarkdownHeadingText(line);
+  if (/^prep(?:aration)?(?:\s+time)?(?:\b|:)/.test(text)) return "prep";
+  if (/^cook(?:ing)?(?:\s+time)?(?:\b|:)/.test(text)) return "cook";
+  if (/^total(?:\s+time)?(?:\b|:)/.test(text)) return "total";
+  if (/^(?:yields?|servings?|makes|serves)(?:\b|:)/.test(text)) return "servings";
+  return null;
+}
+
+/** Return the value following a metadata label, if it is on the same line. */
+function markdownMetadataValue(line: string, label: MarkdownMetadata): string {
+  const text = sanitizeText(line.replace(/^#+\s*/, ""));
+  const patterns: Record<MarkdownMetadata, RegExp> = {
+    prep: /^(?:prep(?:aration)?(?:\s+time)?)\b/i,
+    cook: /^(?:cook(?:ing)?(?:\s+time)?)\b/i,
+    total: /^(?:total(?:\s+time)?)\b/i,
+    servings: /^(?:yields?|servings?|makes|serves)\b/i,
+  };
+  const match = patterns[label].exec(text);
+  return match ? text.slice(match[0].length).replace(/^\s*:\s*/, "").trim() : "";
+}
+
 /**
  * Convert LaTeX-escaped fractions ("\\(1 / 4\\)") to plain "1/4" so the
  * ingredient parser can read them as quantities. Mistral OCR emits fractions
@@ -269,19 +322,26 @@ function parseTesseractColumns(lines: string[]): RecipeDraft | null {
 function parseRecipeMarkdown(lines: string[]): RecipeDraft {
   const draft = emptyDraft();
 
-  // Title: first `#` heading (strip the prefix); otherwise the first
-  // content line that is not a list item or metadata.
-  const heading = lines.find((line) => MARKDOWN_HEADING.test(line));
+  // Title: first non-generic markdown heading; otherwise the first non-list,
+  // non-metadata content line that is not itself a generic section label.
+  const heading = lines.find(
+    (line) => MARKDOWN_HEADING.test(line) && classifyMarkdownSection(line) === null,
+  );
   let titleLine: string | null = null;
   if (heading) {
     titleLine = heading;
     draft.title = sanitizeText(heading.replace(/^#+\s*/, "")).slice(0, 200);
   } else {
     const fallback = lines.find(
-      (line) => !MARKDOWN_BULLET.test(line) && !MARKDOWN_NUMBERED.test(line) && !isMetadataLine(line),
+      (line) =>
+        !MARKDOWN_HEADING.test(line) &&
+        !MARKDOWN_BULLET.test(line) &&
+        !MARKDOWN_NUMBERED.test(line) &&
+        !isMetadataLine(line) &&
+        classifyMarkdownSection(line) === null,
     );
-    titleLine = fallback ?? lines[0] ?? null;
-    draft.title = (titleLine ?? "").slice(0, 200);
+    titleLine = fallback ?? null;
+    draft.title = titleLine ? sanitizeText(titleLine).slice(0, 200) : "";
   }
 
   const ingredientLines: string[] = [];
@@ -289,28 +349,114 @@ function parseRecipeMarkdown(lines: string[]): RecipeDraft {
   const preamble: string[] = [];
   const notesBlocks: string[][] = [];
   let noteBlock: string[] | null = null;
-  let phase: "preamble" | "ingredients" | "steps" | "notes" = "preamble";
+  let phase: Exclude<MarkdownSection, "metadata"> = "preamble";
+  let allowPreambleIngredientBullets = true;
+  let pendingMetadata: MarkdownMetadata | null = null;
+  let totalMinutes: number | null = null;
+
+  const applyMetadataValue = (label: MarkdownMetadata, value: string): boolean => {
+    const parsed = label === "servings" ? parseServings(value) : parseMinutesFromText(value);
+    if (parsed === null) return false;
+    if (label === "prep" && draft.prepMinutes === null) draft.prepMinutes = parsed;
+    if (label === "cook" && draft.cookMinutes === null) draft.cookMinutes = parsed;
+    if (label === "total" && totalMinutes === null) totalMinutes = parsed;
+    if (label === "servings" && draft.servings === null) draft.servings = parsed;
+    return true;
+  };
 
   for (const line of lines) {
     if (titleLine && line === titleLine) continue;
     if (MARKDOWN_RULE.test(line)) continue;
     if (MARKDOWN_HEADING.test(line)) {
-      // Section heading: "Notes"/"Tips" start a notes block; other headings
-      // move into the ingredients region.
-      if (/^#+\s*(notes?|tips?)\b/i.test(line)) {
+      pendingMetadata = null;
+      const section = classifyMarkdownSection(line);
+      if (section === "metadata") {
+        const label = markdownMetadataLabel(line);
+        const value = label ? markdownMetadataValue(line, label) : "";
+        if (label && !applyMetadataValue(label, value)) pendingMetadata = label;
+      } else if (section === "ingredients") {
+        phase = "ingredients";
+        noteBlock = null;
+      } else if (section === "steps") {
+        phase = "steps";
+        noteBlock = null;
+      } else if (section === "notes") {
         phase = "notes";
         noteBlock = [];
         notesBlocks.push(noteBlock);
+      } else if (section === "preamble") {
+        phase = "preamble";
+        allowPreambleIngredientBullets = false;
+        noteBlock = null;
+      } else if (section === "nutrition") {
+        phase = "nutrition";
+        noteBlock = null;
       } else {
-        phase = "ingredients";
+        // Keep an existing explicit phase for recipe subheadings, but do not
+        // let an unrelated heading start ingredient collection.
         noteBlock = null;
       }
       continue;
     }
+
+    if (pendingMetadata) {
+      const label = pendingMetadata;
+      pendingMetadata = null;
+      if (applyMetadataValue(label, line)) continue;
+    }
+
+    if (NOTES_MARKER.test(line)) {
+      phase = "notes";
+      noteBlock = [];
+      notesBlocks.push(noteBlock);
+      noteBlock.push(line);
+      continue;
+    }
+
+    const section = classifyMarkdownSection(line);
+    if (section) {
+      if (section === "metadata") {
+        const label = markdownMetadataLabel(line);
+        const value = label ? markdownMetadataValue(line, label) : "";
+        if (label && !applyMetadataValue(label, value)) pendingMetadata = label;
+      } else if (section === "ingredients") {
+        phase = "ingredients";
+        noteBlock = null;
+      } else if (section === "steps") {
+        phase = "steps";
+        noteBlock = null;
+      } else if (section === "notes") {
+        phase = "notes";
+        noteBlock = [];
+        notesBlocks.push(noteBlock);
+      } else if (section === "preamble") {
+        phase = "preamble";
+        allowPreambleIngredientBullets = false;
+        noteBlock = null;
+      } else if (section === "nutrition") {
+        phase = "nutrition";
+        noteBlock = null;
+      }
+      continue;
+    }
+
     if (MARKDOWN_BULLET.test(line)) {
-      phase = "ingredients";
-      noteBlock = null;
-      ingredientLines.push(line.replace(/^[-*+]\s+/, ""));
+      const bulletText = line.replace(/^[-*+]\s+/, "");
+      if (phase === "ingredients") {
+        ingredientLines.push(bulletText);
+      } else if (phase === "preamble" && allowPreambleIngredientBullets) {
+        // Heading-less OCR often starts with ingredient bullets, but a
+        // descriptive/list bullet must never become an ingredient by itself.
+        const parsed = parseIngredientLine(bulletText);
+        if (parsed && parsed.quantity !== null) {
+          phase = "ingredients";
+          ingredientLines.push(bulletText);
+        } else {
+          preamble.push(bulletText);
+        }
+      } else if (phase === "notes" && noteBlock) {
+        noteBlock.push(bulletText);
+      }
       continue;
     }
     if (MARKDOWN_NUMBERED.test(line)) {
@@ -319,18 +465,12 @@ function parseRecipeMarkdown(lines: string[]): RecipeDraft {
       numbered.push(line);
       continue;
     }
-    if (NOTES_MARKER.test(line)) {
-      phase = "notes";
-      noteBlock = [];
-      notesBlocks.push(noteBlock);
-      noteBlock.push(line);
-      continue;
-    }
+
     if (isMetadataLine(line)) {
       const times = parseMetadataTime(line);
       if (times.prep !== null && draft.prepMinutes === null) draft.prepMinutes = times.prep;
       if (times.cook !== null && draft.cookMinutes === null) draft.cookMinutes = times.cook;
-      if (times.total !== null && draft.cookMinutes === null) draft.cookMinutes = times.total;
+      if (times.total !== null && totalMinutes === null) totalMinutes = times.total;
       const serving = SERVING_LABEL.exec(line);
       if (serving && draft.servings === null) {
         draft.servings = parseServings(line.slice(serving[0].length));
@@ -364,6 +504,7 @@ function parseRecipeMarkdown(lines: string[]): RecipeDraft {
     // phase === "steps": stray non-step text is ignored.
   }
 
+  if (draft.cookMinutes === null && totalMinutes !== null) draft.cookMinutes = totalMinutes;
   draft.description = preamble.join(" ").slice(0, 2000);
   draft.ingredients = ingredientLines
     .map(parseIngredientLine)
