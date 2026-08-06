@@ -16,6 +16,8 @@ jobs:
     steps:
       - name: Deploy over SSH
         uses: appleboy/ssh-action@v1
+        env:
+          OCR_API_KEY: ${{ secrets.OCR_API_KEY }}
         with:
           host: ${{ secrets.OCI_HOST }}
           username: ${{ secrets.OCI_USER }}
@@ -32,6 +34,9 @@ jobs:
               sed -i '/^MISTRAL_API_KEY=/d' .env
               echo "MISTRAL_API_KEY=$OCR_API_KEY" >> .env
             fi
+            sed -i '/^AUTH_URL=/d; /^NEXTAUTH_URL=/d' .env
+            APP_ORIGIN_VALUE="$(grep '^APP_ORIGIN=' .env | cut -d= -f2-)"
+            printf 'AUTH_URL=%s\n' "$APP_ORIGIN_VALUE" >> .env
             docker compose build
             docker compose up -d
             sleep 10
