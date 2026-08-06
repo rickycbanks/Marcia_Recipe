@@ -6,6 +6,7 @@ import {
   type MistralResponseLike,
   type RecognizeMistralOptions,
 } from "@/lib/imports/mistralOcr";
+import { parseRecipeText } from "@/lib/imports/ocr";
 import { OCR_LIMITS } from "@/lib/validation/constants";
 
 const API_KEY = "test-key-1234567890";
@@ -149,5 +150,61 @@ describe("recognizeImageWithMistral", () => {
     await expect(recognizeImageWithMistral(Buffer.from("x"), "image/png")).rejects.toMatchObject({
       code: "BAD_REQUEST",
     });
+  });
+});
+
+describe("parseRecipeText markdown sections", () => {
+  it("keeps generic headings out of the title and parses section metadata", () => {
+    const markdown = `# Orchard Skillet Cakes
+## Description
+Short description.
+- 2 servings of context
+## Yield
+Makes 6 cakes
+## Total Time
+30 minutes
+## Prep Time
+10 minutes
+## Cook Time
+20 minutes
+## Ingredients
+- 1 cup grain-free flour
+- 2 tablespoons neutral oil
+- 1 medium fruit
+- 1 teaspoon leavener
+## Instructions
+1. Combine dry ingredients.
+2. Add wet ingredients.
+3. Cook in a skillet.
+## Notes
+Serve warm.`;
+
+    const draft = parseRecipeText(markdown);
+
+    expect(draft.title).toBe("Orchard Skillet Cakes");
+    expect(draft.title).not.toBe("Description");
+    expect(draft.servings).toBe(6);
+    expect(draft.prepMinutes).toBe(10);
+    expect(draft.cookMinutes).toBe(20);
+    expect(draft.ingredients).toHaveLength(4);
+    expect(draft.steps).toHaveLength(3);
+    expect(draft.notesMarkdown).toContain("Serve warm");
+  });
+
+  it("does not use Description as a title when no title heading exists", () => {
+    const markdown = `## Description
+Orchard Skillet Cakes
+Short description.
+## Ingredients
+- 1 cup flour
+- 2 eggs
+## Instructions
+1. Mix.
+2. Cook.`;
+
+    const draft = parseRecipeText(markdown);
+
+    expect(draft.title).toBe("Orchard Skillet Cakes");
+    expect(draft.title).not.toBe("Description");
   });
 });
