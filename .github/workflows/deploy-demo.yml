@@ -41,8 +41,11 @@ jobs:
             docker compose up -d
             sleep 10
             curl -sf http://127.0.0.1:3001/api/health || (echo "HEALTH CHECK FAILED" && exit 1)
-            # Reset demo data to seed state (wipes any changes, restores 8 recipes + owner)
-            sudo /opt/demo-reset.sh
+            # Reset demo data to repo-managed seed after the new container is live
+            SEED_URL="${APP_ORIGIN_VALUE}/api/admin/demo-seed"
+            curl -sf "$SEED_URL" -o ~/marcia-recipe-demo/seed.tar.gz || (echo "Failed to download repo-managed seed" && exit 1)
+            docker compose exec app node scripts/restore.ts --file /app/seed.tar.gz --force
+            rm -f ~/marcia-recipe-demo/seed.tar.gz
             sleep 5
             curl -sf http://127.0.0.1:3001/api/health || (echo "HEALTH CHECK FAILED AFTER RESET" && exit 1)
             echo "Demo deploy + reset complete"

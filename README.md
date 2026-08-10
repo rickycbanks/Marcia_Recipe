@@ -295,6 +295,8 @@ files are replaced; `--force` is required to replace an existing data root.
 - [`README.md`](README.md) — this file (features, build, deploy, usage)
 - [`ARCHITECTURE.md`](ARCHITECTURE.md) — how the app is built, what each part is, and why
 - [`oracle_cloud.md`](oracle_cloud.md) — step-by-step Oracle Cloud Always Free deployment
+- [`scripts/generate-demo-seed.ts`](scripts/generate-demo-seed.ts) — export the live demo catalog into a repo-managed seed directory
+- [`scripts/restore-demo-seed.ts`](scripts/restore-demo-seed.ts) — rebuild a DATA_ROOT from the repo-managed seed directory
 
 ---
 

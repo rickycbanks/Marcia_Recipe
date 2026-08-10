@@ -10,13 +10,20 @@ jobs:
     runs-on: ubuntu-latest
     environment: demo
     steps:
-      - name: Reset demo from seed
+      - name: Deploy over SSH
         uses: appleboy/ssh-action@v1
         with:
           host: ${{ secrets.OCI_HOST }}
           username: ${{ secrets.OCI_USER }}
           key: ${{ secrets.OCI_SSH_KEY }}
           script: |
-            sudo /opt/demo-reset.sh
+            cd ~/marcia-recipe-demo
+            git fetch origin for_demo
+            git reset --hard origin/for_demo
+            APP_ORIGIN_VALUE="$(grep '^APP_ORIGIN=' .env | cut -d= -f2-)"
+            SEED_URL="${APP_ORIGIN_VALUE}/api/admin/demo-seed"
+            curl -sf "$SEED_URL" -o ~/marcia-recipe-demo/seed.tar.gz || (echo "Failed to download repo-managed seed" && exit 1)
+            docker compose exec app node scripts/restore.ts --file /app/seed.tar.gz --force
+            rm -f ~/marcia-recipe-demo/seed.tar.gz
             curl -sf http://127.0.0.1:3001/api/health || (echo "HEALTH CHECK FAILED" && exit 1)
-            echo "Demo reset complete"
+            echo "Demo reset from repo-managed seed complete"

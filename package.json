@@ -23,6 +23,8 @@
     "cli:restore": "tsx scripts/restore.ts",
     "cli:migrate": "tsx scripts/migrate.ts",
     "cli:rebuild-indexes": "tsx scripts/rebuild-indexes.ts",
+    "cli:generate-demo-seed": "tsx scripts/generate-demo-seed.ts",
+    "cli:restore-demo-seed": "tsx scripts/restore-demo-seed.ts",
     "icons": "tsx scripts/generate-icons.ts"
   },
   "dependencies": {
