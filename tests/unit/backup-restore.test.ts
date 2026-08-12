@@ -182,9 +182,13 @@ afterEach(async () => {
     await rm(getRollbackRoot(root), { recursive: true, force: true });
     await rm(getSwapMarkerPath(root), { force: true });
     // extractArchive removes its staging sibling on error; clean any leftovers.
+    // Scope the sweep to this pid so a parallel test fork (which also prefixes
+    // staging siblings with `.marcia-restore-${process.pid}-`) cannot have its
+    // mid-flight staging dir yanked out from under it.
     try {
+      const prefix = `.marcia-restore-${process.pid}-`;
       for (const entry of await readdir(join(root, ".."))) {
-        if (entry.startsWith(".marcia-restore-")) {
+        if (entry.startsWith(prefix)) {
           await rm(join(root, "..", entry), { recursive: true, force: true });
         }
       }
