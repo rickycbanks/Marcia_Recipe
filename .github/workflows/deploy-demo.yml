@@ -25,6 +25,7 @@ jobs:
           envs: |
             OCR_API_KEY
           script: |
+            set -euo pipefail
             cd ~/marcia-recipe-demo
             git fetch origin for_demo
             git checkout for_demo
@@ -41,11 +42,12 @@ jobs:
             docker compose up -d
             sleep 10
             curl -sf http://127.0.0.1:3001/api/health || (echo "HEALTH CHECK FAILED" && exit 1)
-            # Reset demo data to repo-managed seed after the new container is live
-            SEED_URL="${APP_ORIGIN_VALUE}/api/admin/demo-seed"
-            curl -sf "$SEED_URL" -o ~/marcia-recipe-demo/seed.tar.gz || (echo "Failed to download repo-managed seed" && exit 1)
-            docker compose exec app node scripts/restore.ts --file /app/seed.tar.gz --force
-            rm -f ~/marcia-recipe-demo/seed.tar.gz
+            # Reset demo data from the immutable repo-managed seed baked into
+            # the seed-restore tools stage.  Restore fails loud on any
+            # recipe/media inconsistency.
+            docker compose run --rm --no-deps seed-restore \
+              npm run cli:restore-demo-seed -- \
+              --output-dir /app/scripts/demo-seed --force --data-root /data/demo
             sleep 5
             curl -sf http://127.0.0.1:3001/api/health || (echo "HEALTH CHECK FAILED AFTER RESET" && exit 1)
             echo "Demo deploy + reset complete"

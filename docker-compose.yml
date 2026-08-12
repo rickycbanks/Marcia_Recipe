@@ -29,5 +29,25 @@ services:
       retries: 3
       start_period: 20s
 
+  # ---------------------------------------------------------------------------
+  # seed-restore — never started by `docker compose up`.  The reset/deploy
+  # workflows invoke it explicitly with `docker compose run --rm seed-restore
+  # npm run cli:restore-demo-seed -- --output-dir /app/scripts/demo-seed --force`.
+  # It shares the demo's data volume so its atomic root swap takes effect for
+  # the live `app` container.
+  # ---------------------------------------------------------------------------
+  seed-restore:
+    build:
+      context: .
+      target: tools
+    image: marcia-recipe:demo-tools
+    environment:
+      NODE_ENV: production
+      DATA_ROOT: /data/demo
+    volumes:
+      - marcia_demo_data:/data
+    profiles:
+      - tools
+
 volumes:
   marcia_demo_data:

@@ -28,3 +28,16 @@ COPY --from=builder --chown=app:app /app/.next/static ./.next/static
 USER app
 EXPOSE 3000
 CMD ["node", "server.js"]
+
+# ---------------------------------------------------------------------------
+# tools stage — exposes tsx + scripts + src + the committed demo seed so the
+# demo host can restore its DATA_ROOT from an immutable repo-managed seed
+# without expanding the slim production image.  Reach this stage only via the
+# `seed-restore` profile service in docker-compose.yml.
+# ---------------------------------------------------------------------------
+FROM builder AS tools
+WORKDIR /app
+# The builder stage already has the full source, node_modules (incl. tsx as a
+# devDependency) and built .next output — everything `npm run
+# cli:restore-demo-seed` imports is here.  No CMD is baked in: the workflow
+# supplies the entrypoint via `docker compose run --rm seed-restore npm run …`.

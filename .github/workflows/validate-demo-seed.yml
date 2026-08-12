@@ -1,0 +1,33 @@
+name: Validate Demo Seed
+
+on:
+  pull_request:
+    paths:
+      - "scripts/demo-seed/**"
+      - "scripts/restore-demo-seed.ts"
+      - "scripts/validate-demo-seed.ts"
+  workflow_dispatch:
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: "npm"
+      - run: npm ci
+      - name: Validate seed directory (when present)
+        run: |
+          if [ -f scripts/demo-seed/manifest.json ]; then
+            npm run cli:validate-demo-seed -- --output-dir scripts/demo-seed
+          else
+            echo "scripts/demo-seed/manifest.json not present yet — skipping validation."
+          fi
+      - name: Type-check + lint
+        run: |
+          npm run typecheck
+          npm run lint
+      - name: Unit tests
+        run: npm test
