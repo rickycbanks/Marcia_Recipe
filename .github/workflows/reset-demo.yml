@@ -5,6 +5,12 @@ on:
     - cron: '0 * * * *'   # hourly at :00 UTC
   workflow_dispatch:
 
+# Share the deploy-demo group so an hourly reset never races a deploy on the
+# same host (reset + deploy both mutate ~/marcia-recipe-demo on the host).
+concurrency:
+  group: deploy-demo
+  cancel-in-progress: false
+
 jobs:
   reset:
     runs-on: ubuntu-latest
@@ -19,6 +25,11 @@ jobs:
           script: |
             set -euo pipefail
             cd ~/marcia-recipe-demo
+            # Keep the host checkout in sync with origin/for_demo so the tools
+            # image and seed are never stale (no-op when already current).
+            git fetch origin for_demo
+            git checkout for_demo
+            git reset --hard origin/for_demo
             # Ensure the seed-restore tools image exists (no-op if already built).
             docker compose build seed-restore
             # Wipe + restore the demo DATA_ROOT from the immutable repo-managed
@@ -28,5 +39,20 @@ jobs:
             docker compose run --rm --no-deps seed-restore \
               npm run cli:restore-demo-seed -- \
               --output-dir /app/scripts/demo-seed --force --data-root /data/demo
-            curl -sf http://127.0.0.1:3001/api/health || (echo "HEALTH CHECK FAILED" && exit 1)
+            wait_for_health() {
+              local url="$1"
+              for _ in $(seq 1 24); do
+                if curl -sf "$url" >/dev/null 2>&1; then
+                  return 0
+                fi
+                sleep 5
+              done
+              return 1
+            }
+            if ! wait_for_health http://127.0.0.1:3001/api/ready; then
+              echo "READY CHECK FAILED AFTER RESET (/api/ready)"
+              docker compose ps
+              docker compose logs --tail=200 app
+              exit 1
+            fi
             echo "Demo reset from repo-managed seed complete"

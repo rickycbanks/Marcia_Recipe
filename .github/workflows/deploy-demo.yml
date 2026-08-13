@@ -38,16 +38,53 @@ jobs:
             sed -i '/^AUTH_URL=/d; /^NEXTAUTH_URL=/d' .env
             APP_ORIGIN_VALUE="$(grep '^APP_ORIGIN=' .env | cut -d= -f2-)"
             printf 'AUTH_URL=%s\n' "$APP_ORIGIN_VALUE" >> .env
-            docker compose build
+
+            # Build BOTH images explicitly.  The seed-restore service is gated
+            # behind the `tools` profile, so a bare `docker compose build`
+            # would skip it; and the app image must be the slim `runner` target
+            # (not the Dockerfile's final `tools` stage, which has no CMD and
+            # would make the container exit immediately).
+            docker compose build app seed-restore
+
             docker compose up -d
-            sleep 10
-            curl -sf http://127.0.0.1:3001/api/health || (echo "HEALTH CHECK FAILED" && exit 1)
+
+            wait_for_health() {
+              local url="$1"
+              for _ in $(seq 1 24); do
+                if curl -sf "$url" >/dev/null 2>&1; then
+                  return 0
+                fi
+                sleep 5
+              done
+              return 1
+            }
+
+            if ! wait_for_health http://127.0.0.1:3001/api/health; then
+              echo "HEALTH CHECK FAILED (/api/health)"
+              docker compose ps
+              docker compose logs --tail=200 app
+              exit 1
+            fi
+
             # Reset demo data from the immutable repo-managed seed baked into
             # the seed-restore tools stage.  Restore fails loud on any
             # recipe/media inconsistency.
             docker compose run --rm --no-deps seed-restore \
               npm run cli:restore-demo-seed -- \
               --output-dir /app/scripts/demo-seed --force --data-root /data/demo
-            sleep 5
-            curl -sf http://127.0.0.1:3001/api/health || (echo "HEALTH CHECK FAILED AFTER RESET" && exit 1)
+
+            # Confirm the app is alive AND ready (DATA_ROOT restored and
+            # writable by the app).
+            if ! wait_for_health http://127.0.0.1:3001/api/health; then
+              echo "HEALTH CHECK FAILED AFTER RESET (/api/health)"
+              docker compose ps
+              docker compose logs --tail=200 app
+              exit 1
+            fi
+            if ! wait_for_health http://127.0.0.1:3001/api/ready; then
+              echo "READY CHECK FAILED AFTER RESET (/api/ready)"
+              docker compose ps
+              docker compose logs --tail=200 app
+              exit 1
+            fi
             echo "Demo deploy + reset complete"

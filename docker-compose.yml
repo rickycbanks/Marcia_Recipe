@@ -1,6 +1,8 @@
 services:
   app:
-    build: .
+    build:
+      context: .
+      target: runner
     image: marcia-recipe:demo
     restart: unless-stopped
     ports:
@@ -34,16 +36,22 @@ services:
   # workflows invoke it explicitly with `docker compose run --rm seed-restore
   # npm run cli:restore-demo-seed -- --output-dir /app/scripts/demo-seed --force`.
   # It shares the demo's data volume so its atomic root swap takes effect for
-  # the live `app` container.
+  # the live `app` container.  It runs as the same UID as the runner `app`
+  # (1001) so the restored DATA_ROOT stays readable/writable by the app, and
+  # gets the env the restore engine truly requires (getEnv() rejects
+  # production without AUTH_SECRET).
   # ---------------------------------------------------------------------------
   seed-restore:
     build:
       context: .
       target: tools
     image: marcia-recipe:demo-tools
+    user: "1001:1001"
     environment:
       NODE_ENV: production
+      HOME: /tmp
       DATA_ROOT: /data/demo
+      AUTH_SECRET: ${AUTH_SECRET:?Set AUTH_SECRET in .env}
     volumes:
       - marcia_demo_data:/data
     profiles:

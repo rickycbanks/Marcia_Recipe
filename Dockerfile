@@ -19,7 +19,7 @@ WORKDIR /app
 RUN groupadd --system --gid 1001 app \
   && useradd --system --uid 1001 --gid app app \
   && mkdir -p /data/marcia-recipe \
-  && chown -R app:app /data/marcia-recipe
+  && chown -R app:app /data
 
 COPY --from=builder --chown=app:app /app/public ./public
 COPY --from=builder --chown=app:app /app/.next/standalone ./
