@@ -1,0 +1,177 @@
+{
+  "schemaVersion": 2,
+  "id": "00000000-0000-4000-8000-000000000015",
+  "slug": "creamy-mushroom-rigatoni",
+  "previousSlugs": [],
+  "visibility": "public",
+  "title": "Creamy Mushroom Rigatoni",
+  "description": "Rigatoni tossed in a silky white-wine mushroom sauce with thyme and plenty of parmesan — proper comfort food.",
+  "prepMinutes": 10,
+  "cookMinutes": 25,
+  "servings": 4,
+  "difficulty": "medium",
+  "category": "Dinner",
+  "tags": [
+    "dinner",
+    "pasta",
+    "mushrooms",
+    "vegetarian",
+    "creamy",
+    "comfort-food"
+  ],
+  "sourceUrl": "https://www.bbcgoodfood.com/recipes/collection/mushroom-recipes",
+  "bookTitle": null,
+  "bookAuthor": null,
+  "bookPage": null,
+  "ingredients": [
+    {
+      "id": "00000000-0000-4000-8000-00000000022f",
+      "order": 0,
+      "quantity": 400,
+      "unit": "g",
+      "name": "rigatoni",
+      "note": "or penne"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000230",
+      "order": 1,
+      "quantity": 500,
+      "unit": "g",
+      "name": "mixed mushrooms",
+      "note": "chestnut and cremini, thickly sliced"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000231",
+      "order": 2,
+      "quantity": 2,
+      "unit": "tbsp",
+      "name": "olive oil",
+      "note": null
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000232",
+      "order": 3,
+      "quantity": 30,
+      "unit": "g",
+      "name": "butter",
+      "note": null
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000233",
+      "order": 4,
+      "quantity": 1,
+      "unit": "",
+      "name": "shallot",
+      "note": "finely chopped"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000234",
+      "order": 5,
+      "quantity": 3,
+      "unit": "cloves",
+      "name": "garlic",
+      "note": "thinly sliced"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000235",
+      "order": 6,
+      "quantity": 1,
+      "unit": "tsp",
+      "name": "fresh thyme leaves",
+      "note": null
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000236",
+      "order": 7,
+      "quantity": 120,
+      "unit": "ml",
+      "name": "dry white wine",
+      "note": "or use extra stock"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000237",
+      "order": 8,
+      "quantity": 250,
+      "unit": "ml",
+      "name": "double cream",
+      "note": null
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000238",
+      "order": 9,
+      "quantity": 60,
+      "unit": "g",
+      "name": "parmesan",
+      "note": "finely grated, plus extra to serve"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000239",
+      "order": 10,
+      "quantity": 0.5,
+      "unit": "",
+      "name": "lemon",
+      "note": "juice"
+    },
+    {
+      "id": "00000000-0000-4000-8000-00000000023a",
+      "order": 11,
+      "quantity": null,
+      "unit": null,
+      "name": "sea salt and black pepper",
+      "note": "to taste"
+    }
+  ],
+  "steps": [
+    {
+      "id": "00000000-0000-4000-8000-00000000031f",
+      "order": 0,
+      "text": "Cook the rigatoni in well-salted boiling water until 1 minute shy of al dente; reserve 200 ml of the pasta water before draining."
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000320",
+      "order": 1,
+      "text": "Meanwhile, heat the oil and butter in a large frying pan over medium-high heat. Add the mushrooms in a single layer and leave them alone for 3 minutes until deeply golden underneath, then toss and cook 2 minutes more."
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000321",
+      "order": 2,
+      "text": "Add the shallot, garlic and thyme and cook for 1 minute until fragrant."
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000322",
+      "order": 3,
+      "text": "Pour in the wine and let it bubble down by half, scraping up the browned bits from the base of the pan."
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000323",
+      "order": 4,
+      "text": "Stir in the cream, bring to a gentle simmer, then add the parmesan and lemon juice and season."
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000324",
+      "order": 5,
+      "text": "Toss the drained pasta through the sauce with a splash of the reserved pasta water, loosening until glossy."
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000325",
+      "order": 6,
+      "text": "Serve immediately in warm bowls with extra parmesan and a crack of black pepper."
+    }
+  ],
+  "notesMarkdown": "## Golden mushrooms\n\nThe single biggest flavour move is **browning the mushrooms properly** — they should\nlook deeply coloured, not pale and steamed. Do it in batches if your pan is small.\n\n## Lighter version\n\nSwap half the double cream for chicken-style stock and finish with a spoon of\n*crème fraîche* instead. The sauce stays silky but sits lighter.\n\n## Freezing\n\nThe mushroom sauce freezes for up to 3 months. Reheat gently and toss with freshly\ncooked pasta — freeze the pasta separately or not at all.\n",
+  "media": [
+    {
+      "id": "00000000-0000-4000-8000-000000000107",
+      "fileName": "00000000-0000-4000-8000-000000000107.webp",
+      "alt": "Pasta in a creamy mushroom sauce garnished with herbs on a decorative plate",
+      "width": 1600,
+      "height": 1067,
+      "bytes": 206722,
+      "isPrimary": true,
+      "createdAt": "2026-08-13T01:57:47.185Z"
+    }
+  ],
+  "archivedAt": null,
+  "createdAt": "2026-08-13T01:57:47.185Z",
+  "updatedAt": "2026-08-13T01:57:47.185Z"
+}

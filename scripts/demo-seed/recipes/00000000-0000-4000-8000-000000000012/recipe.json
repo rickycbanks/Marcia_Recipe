@@ -1,0 +1,180 @@
+{
+  "schemaVersion": 2,
+  "id": "00000000-0000-4000-8000-000000000012",
+  "slug": "lemony-chickpea-crunch-salad",
+  "previousSlugs": [],
+  "visibility": "members",
+  "title": "Lemony Chickpea Crunch Salad",
+  "description": "A bright make-ahead lunch of chickpeas, caramelised sweet potato, seeds and cranberries under a lemony tahini dressing.",
+  "prepMinutes": 20,
+  "cookMinutes": 25,
+  "servings": 4,
+  "difficulty": "easy",
+  "category": "Lunch",
+  "tags": [
+    "lunch",
+    "salad",
+    "chickpeas",
+    "make-ahead",
+    "meal-prep",
+    "high-protein"
+  ],
+  "sourceUrl": "https://www.loveandlemons.com/chickpea-salad/",
+  "bookTitle": null,
+  "bookAuthor": null,
+  "bookPage": null,
+  "ingredients": [
+    {
+      "id": "00000000-0000-4000-8000-000000000211",
+      "order": 0,
+      "quantity": 2,
+      "unit": "x 400 g cans",
+      "name": "chickpeas",
+      "note": "drained and rinsed (480 g cooked)"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000212",
+      "order": 1,
+      "quantity": 600,
+      "unit": "g",
+      "name": "sweet potato",
+      "note": "peeled, cut into 2 cm chunks"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000213",
+      "order": 2,
+      "quantity": 2,
+      "unit": "tbsp",
+      "name": "olive oil",
+      "note": "divided"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000214",
+      "order": 3,
+      "quantity": 1,
+      "unit": "tsp",
+      "name": "smoked paprika",
+      "note": null
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000215",
+      "order": 4,
+      "quantity": 100,
+      "unit": "g",
+      "name": "baby spinach",
+      "note": null
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000216",
+      "order": 5,
+      "quantity": 4,
+      "unit": "tbsp",
+      "name": "pumpkin seeds",
+      "note": "toasted"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000217",
+      "order": 6,
+      "quantity": 60,
+      "unit": "g",
+      "name": "dried cranberries",
+      "note": null
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000218",
+      "order": 7,
+      "quantity": 80,
+      "unit": "g",
+      "name": "feta",
+      "note": "crumbled — optional, omit for vegan"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000219",
+      "order": 8,
+      "quantity": 1,
+      "unit": "",
+      "name": "lemon",
+      "note": "zest and juice"
+    },
+    {
+      "id": "00000000-0000-4000-8000-00000000021a",
+      "order": 9,
+      "quantity": 2,
+      "unit": "tbsp",
+      "name": "tahini",
+      "note": "stirred well"
+    },
+    {
+      "id": "00000000-0000-4000-8000-00000000021b",
+      "order": 10,
+      "quantity": 1,
+      "unit": "tsp",
+      "name": "honey",
+      "note": "or maple syrup for vegan"
+    },
+    {
+      "id": "00000000-0000-4000-8000-00000000021c",
+      "order": 11,
+      "quantity": 1,
+      "unit": "clove",
+      "name": "garlic",
+      "note": "finely grated"
+    },
+    {
+      "id": "00000000-0000-4000-8000-00000000021d",
+      "order": 12,
+      "quantity": 3,
+      "unit": "tbsp",
+      "name": "cold water",
+      "note": null
+    }
+  ],
+  "steps": [
+    {
+      "id": "00000000-0000-4000-8000-00000000030d",
+      "order": 0,
+      "text": "Heat the oven to 200°C fan. Toss the sweet potato with 1 tbsp olive oil, the smoked paprika and salt; spread on a tray and roast for 20–25 minutes until caramelised at the edges."
+    },
+    {
+      "id": "00000000-0000-4000-8000-00000000030e",
+      "order": 1,
+      "text": "Meanwhile make the dressing: whisk the lemon juice, tahini, honey, garlic, remaining olive oil and cold water until smooth and pourable. Season with salt and pepper."
+    },
+    {
+      "id": "00000000-0000-4000-8000-00000000030f",
+      "order": 2,
+      "text": "Combine the chickpeas, spinach, cranberries and pumpkin seeds in a large bowl."
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000310",
+      "order": 3,
+      "text": "Fold in the roasted sweet potato while still warm so the spinach just wilts."
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000311",
+      "order": 4,
+      "text": "Pour over the dressing, toss well and top with the lemon zest and crumbled feta, if using."
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000312",
+      "order": 5,
+      "text": "Rest for 30 minutes before serving; it keeps, covered, in the fridge for 3 days."
+    }
+  ],
+  "notesMarkdown": "## Why it works\n\nThe contrast of **soft roasted sweet potato**, **firm chickpeas** and **toasty seeds**\nmeans every forkful has texture. The dressing doubles as a dip.\n\n## Make ahead\n\nPrep everything up to step 4 a day ahead and keep the dressing separate;\ntoss just before serving so the salad stays crisp.\n\n## Add-ons\n\n- 100 g crumbled **crispy tofu** for extra protein.\n- A handful of **pomegranate seeds** instead of cranberries in season.\n\n> The tahini dressing thickens as it sits — loosen with a splash of water if needed.\n",
+  "media": [
+    {
+      "id": "00000000-0000-4000-8000-000000000103",
+      "fileName": "00000000-0000-4000-8000-000000000103.webp",
+      "alt": "Close-up of a vibrant chickpea, sweet potato and greens salad with cranberries and seeds",
+      "width": 1068,
+      "height": 1600,
+      "bytes": 86858,
+      "isPrimary": true,
+      "createdAt": "2026-08-13T01:57:47.185Z"
+    }
+  ],
+  "archivedAt": null,
+  "createdAt": "2026-08-13T01:57:47.185Z",
+  "updatedAt": "2026-08-13T01:57:47.185Z"
+}

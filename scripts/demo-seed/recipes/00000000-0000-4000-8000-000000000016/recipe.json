@@ -1,0 +1,187 @@
+{
+  "schemaVersion": 2,
+  "id": "00000000-0000-4000-8000-000000000016",
+  "slug": "dark-chocolate-raspberry-tart",
+  "previousSlugs": [],
+  "visibility": "owner",
+  "title": "Dark Chocolate Raspberry Tart",
+  "description": "A crisp chocolate pastry shell filled with silky dark chocolate ganache and crowned with a ring of raspberries.",
+  "prepMinutes": 40,
+  "cookMinutes": 25,
+  "servings": 10,
+  "difficulty": "hard",
+  "category": "Dessert",
+  "tags": [
+    "dessert",
+    "chocolate",
+    "raspberry",
+    "tart",
+    "bake",
+    "entertaining"
+  ],
+  "sourceUrl": null,
+  "bookTitle": "Dessert Person",
+  "bookAuthor": "Claire Saffitz",
+  "bookPage": null,
+  "ingredients": [
+    {
+      "id": "00000000-0000-4000-8000-00000000023b",
+      "order": 0,
+      "quantity": 180,
+      "unit": "g",
+      "name": "plain flour",
+      "note": null
+    },
+    {
+      "id": "00000000-0000-4000-8000-00000000023c",
+      "order": 1,
+      "quantity": 40,
+      "unit": "g",
+      "name": "cocoa powder",
+      "note": "sifted"
+    },
+    {
+      "id": "00000000-0000-4000-8000-00000000023d",
+      "order": 2,
+      "quantity": 100,
+      "unit": "g",
+      "name": "icing sugar",
+      "note": "sifted"
+    },
+    {
+      "id": "00000000-0000-4000-8000-00000000023e",
+      "order": 3,
+      "quantity": 0.25,
+      "unit": "tsp",
+      "name": "fine salt",
+      "note": null
+    },
+    {
+      "id": "00000000-0000-4000-8000-00000000023f",
+      "order": 4,
+      "quantity": 140,
+      "unit": "g",
+      "name": "cold butter",
+      "note": "cubed"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000240",
+      "order": 5,
+      "quantity": 1,
+      "unit": "large",
+      "name": "egg yolk",
+      "note": "plus 1–2 tbsp cold water if needed"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000241",
+      "order": 6,
+      "quantity": 250,
+      "unit": "g",
+      "name": "dark chocolate",
+      "note": "70% cocoa, finely chopped"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000242",
+      "order": 7,
+      "quantity": 300,
+      "unit": "ml",
+      "name": "double cream",
+      "note": null
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000243",
+      "order": 8,
+      "quantity": 2,
+      "unit": "tbsp",
+      "name": "caster sugar",
+      "note": null
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000244",
+      "order": 9,
+      "quantity": 0.5,
+      "unit": "tsp",
+      "name": "vanilla extract",
+      "note": null
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000245",
+      "order": 10,
+      "quantity": 200,
+      "unit": "g",
+      "name": "raspberries",
+      "note": "fresh, to finish"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000246",
+      "order": 11,
+      "quantity": 1,
+      "unit": "tbsp",
+      "name": "pistachios",
+      "note": "roughly chopped, to finish"
+    }
+  ],
+  "steps": [
+    {
+      "id": "00000000-0000-4000-8000-000000000326",
+      "order": 0,
+      "text": "Make the pastry: blitz the flour, cocoa, icing sugar and salt in a food processor, then pulse in the butter until the mixture looks like coarse sand."
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000327",
+      "order": 1,
+      "text": "Add the yolk and pulse, adding cold water a spoonful at a time, until the dough just comes together. Shape into a disc, wrap and chill for 30 minutes."
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000328",
+      "order": 2,
+      "text": "Roll the dough out and line a 24 cm fluted tart tin with a removable base. Trim the edges and chill again for 20 minutes."
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000329",
+      "order": 3,
+      "text": "Line the shell with baking paper and baking beans and blind-bake at 180°C fan for 15 minutes. Remove the beans and bake 8–10 minutes more until dry and crisp. Cool completely."
+    },
+    {
+      "id": "00000000-0000-4000-8000-00000000032a",
+      "order": 4,
+      "text": "Make the ganache: heat the cream, sugar and vanilla in a small pan until steaming (do not boil). Pour over the chopped chocolate, stand for 2 minutes, then stir slowly until smooth and glossy."
+    },
+    {
+      "id": "00000000-0000-4000-8000-00000000032b",
+      "order": 5,
+      "text": "Pour the ganache into the cooled shell and gently level the surface."
+    },
+    {
+      "id": "00000000-0000-4000-8000-00000000032c",
+      "order": 6,
+      "text": "Chill for 3 hours until set, then arrange the raspberries in rings over the top and scatter with the pistachios. Serve cold."
+    }
+  ],
+  "notesMarkdown": "## Blind baking\n\nA crisp, **fully baked** shell is non-negotiable — under-baked chocolate pastry goes\nsoggy the moment the ganache lands. If the edges colour early, cover them with foil.\n\n## Substitutions\n\n- **Raspberries:** sliced strawberries or a quenelle of clotted cream instead.\n- **Chocolate:** milk chocolate makes a softer, sweeter ganache — reduce the sugar to 1 tbsp.\n\n## Storage & freezing\n\nKeeps 2 days in the fridge, covered. The finished tart freezes well (without the\nberries) for up to a month; add the fruit after thawing.\n",
+  "media": [
+    {
+      "id": "00000000-0000-4000-8000-000000000108",
+      "fileName": "00000000-0000-4000-8000-000000000108.webp",
+      "alt": "Raspberry, chocolate and nut tart on a white background",
+      "width": 1600,
+      "height": 1067,
+      "bytes": 67290,
+      "isPrimary": true,
+      "createdAt": "2026-08-13T01:57:47.185Z"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000109",
+      "fileName": "00000000-0000-4000-8000-000000000109.webp",
+      "alt": "Chocolate tart topped with fresh raspberries and caramelised nuts",
+      "width": 1067,
+      "height": 1600,
+      "bytes": 59174,
+      "isPrimary": false,
+      "createdAt": "2026-08-13T01:57:47.185Z"
+    }
+  ],
+  "archivedAt": null,
+  "createdAt": "2026-08-13T01:57:47.185Z",
+  "updatedAt": "2026-08-13T01:57:47.185Z"
+}

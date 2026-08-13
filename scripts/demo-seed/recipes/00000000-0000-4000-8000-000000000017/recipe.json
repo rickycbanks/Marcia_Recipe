@@ -1,0 +1,146 @@
+{
+  "schemaVersion": 2,
+  "id": "00000000-0000-4000-8000-000000000017",
+  "slug": "honey-vanilla-panna-cotta-with-berries",
+  "previousSlugs": [],
+  "visibility": "public",
+  "title": "Honey Vanilla Panna Cotta with Berries",
+  "description": "A wobbling vanilla panna cotta sweetened with honey, served with macerated summer berries and an extra spoonful of honey.",
+  "prepMinutes": 15,
+  "cookMinutes": 10,
+  "servings": 6,
+  "difficulty": "easy",
+  "category": "Dessert",
+  "tags": [
+    "dessert",
+    "panna-cotta",
+    "make-ahead",
+    "vegetarian",
+    "gluten-free",
+    "no-bake",
+    "berries"
+  ],
+  "sourceUrl": null,
+  "bookTitle": "Essentials of Classic Italian Cooking",
+  "bookAuthor": "Marcella Hazan",
+  "bookPage": null,
+  "ingredients": [
+    {
+      "id": "00000000-0000-4000-8000-000000000247",
+      "order": 0,
+      "quantity": 500,
+      "unit": "ml",
+      "name": "double cream",
+      "note": null
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000248",
+      "order": 1,
+      "quantity": 100,
+      "unit": "ml",
+      "name": "whole milk",
+      "note": null
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000249",
+      "order": 2,
+      "quantity": 3,
+      "unit": "tbsp",
+      "name": "runny honey",
+      "note": "plus extra to serve"
+    },
+    {
+      "id": "00000000-0000-4000-8000-00000000024a",
+      "order": 3,
+      "quantity": 0.5,
+      "unit": "tsp",
+      "name": "vanilla bean paste",
+      "note": "or 1 vanilla pod, split and scraped"
+    },
+    {
+      "id": "00000000-0000-4000-8000-00000000024b",
+      "order": 4,
+      "quantity": 0.25,
+      "unit": "tsp",
+      "name": "fine salt",
+      "note": null
+    },
+    {
+      "id": "00000000-0000-4000-8000-00000000024c",
+      "order": 5,
+      "quantity": 2.5,
+      "unit": "sheets",
+      "name": "gelatine",
+      "note": "platinum strength, or 5 g powdered"
+    },
+    {
+      "id": "00000000-0000-4000-8000-00000000024d",
+      "order": 6,
+      "quantity": 300,
+      "unit": "g",
+      "name": "mixed berries",
+      "note": "raspberries, blueberries and sliced strawberries"
+    },
+    {
+      "id": "00000000-0000-4000-8000-00000000024e",
+      "order": 7,
+      "quantity": 1,
+      "unit": "tsp",
+      "name": "lemon juice",
+      "note": null
+    }
+  ],
+  "steps": [
+    {
+      "id": "00000000-0000-4000-8000-00000000032d",
+      "order": 0,
+      "text": "Put the cream, milk, honey, vanilla and salt in a saucepan and warm over low heat, stirring, until the honey dissolves — do not let it boil."
+    },
+    {
+      "id": "00000000-0000-4000-8000-00000000032e",
+      "order": 1,
+      "text": "Meanwhile, soak the gelatine sheets in a bowl of cold water for 5 minutes, then squeeze dry."
+    },
+    {
+      "id": "00000000-0000-4000-8000-00000000032f",
+      "order": 2,
+      "text": "Take the cream off the heat and stir in the gelatine until fully dissolved."
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000330",
+      "order": 3,
+      "text": "Strain the mixture through a fine sieve into a jug, then divide between six 150 ml glasses or dariole moulds."
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000331",
+      "order": 4,
+      "text": "Chill for at least 4 hours, ideally overnight, until softly set with a wobble."
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000332",
+      "order": 5,
+      "text": "Up to 30 minutes before serving, toss the berries with the lemon juice and a spoonful of honey."
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000333",
+      "order": 6,
+      "text": "To unmould, dip each mould in hot water for 5 seconds and invert onto a plate; otherwise serve straight from the glass, topped with the berries."
+    }
+  ],
+  "notesMarkdown": "## Setting\n\nThe wobble is the point — panna cotta should **tremble** when you tap the glass.\nIf it needs to be firmer for turning out, add an extra half sheet of gelatine.\n\n> Gelatine sets at cool room temperature and melts at about 35°C, so work quickly\n> once it is in the cream and never re-boil the mixture.\n\n## Variations\n\n- **Coffee:** steep 1 tbsp espresso grounds in the warm cream for 10 minutes before straining.\n- **Citrus:** add the zest of one orange to the cream and serve with poached apricots.\n\n## Storage\n\nKeeps, covered, for up to 3 days in the fridge — making it the perfect\n*make-ahead* dessert for entertaining.\n",
+  "media": [
+    {
+      "id": "00000000-0000-4000-8000-00000000010a",
+      "fileName": "00000000-0000-4000-8000-00000000010a.webp",
+      "alt": "Panna cotta dessert with fresh berries and mint, elegantly plated",
+      "width": 1600,
+      "height": 1067,
+      "bytes": 68904,
+      "isPrimary": true,
+      "createdAt": "2026-08-13T01:57:47.185Z"
+    }
+  ],
+  "archivedAt": null,
+  "createdAt": "2026-08-13T01:57:47.185Z",
+  "updatedAt": "2026-08-13T01:57:47.185Z"
+}

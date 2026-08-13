@@ -1,23 +1,23 @@
 # Demo seed assets
 
 This directory is the **immutable canonical source** for the public demo at
-https://recipes-demo.inthesky.dev.  It is committed to the repository and
+https://recipes-demo.inthesky.dev. It is committed to the repository and
 restored into the demo `DATA_ROOT` on every reset (hourly and after every
-`for_demo` deploy).  Public-writable user changes are wiped on each reset.
+`for_demo` deploy). Public-writable user changes are wiped on each reset.
 
-> ## Status: empty — must be populated before deployment
->
-> This directory is intentionally empty until a maintainer commits a known-good
-> seed.  Until then `npm run cli:restore-demo-seed` will refuse to run and the
-> demo reset workflow will fail loudly rather than silently re-applying the
-> corrupted catalog.  See "Regenerating" below.
+> This seed was authored directly from researched Pexels source photos (see
+> [`SOURCES.md`](./SOURCES.md)). **A human must still visually confirm every
+> recipe's primary image matches its title** before this seed is trusted in
+> production — imagery was selected from source metadata, not by visual
+> inspection.
 
 ## Layout
 
 ```
 scripts/demo-seed/
   manifest.json            ← repo-managed seed manifest (sha256 + media ids)
-  README.md                ← this file + an auto-generated recipe table
+  SOURCES.md               ← Pexels source mapping + provenance for every image
+  README.md                ← this file + the recipe table
   config/
     site.json
   accounts/
@@ -30,53 +30,40 @@ scripts/demo-seed/
 ```
 
 Media files are named after their own `media.id` (per `mediaItemSchema`), not
-slug nor array position.  The restore path uses each `recipe.media[i].id` to
+slug nor array position. The restore path uses each `recipe.media[i].id` to
 name the destination file, so array ordering cannot silently swap image bytes
-between recipes.  The original mismatch bug wrote bytes under `media[0].id`
-regardless of which item was primary; that pattern is gone.
+between recipes.
 
-## Regenerating
+## Recipes
 
-1. Spin up — or point at — a Marcia instance whose catalog visibly matches each
-   recipe title (correct the demos at https://recipes-demo.inthesky.dev via the
-   admin UI first if needed).
-2. From a host with `tsx`:
-   ```sh
-   npm run cli:generate-demo-seed -- \
-     --app-origin https://recipes-demo.inthesky.dev \
-     --username demo --password 'demo123456' \
-     --output-dir scripts/demo-seed
-   ```
-3. **Visually verify** `scripts/demo-seed/README.md` — every recipe's primary
-   image must visibly match the title.
-4. Run the integrity validator:
-   ```sh
-   npm run cli:validate-demo-seed -- --output-dir scripts/demo-seed
-   ```
-5. Commit `scripts/demo-seed/` (manifest, README, all webps, accounts, config).
+| Recipe | Category | Visibility | Primary media id | Media files |
+| --- | --- | --- | --- | --- |
+| Blueberry Buttermilk Pancakes | Breakfast | public | 00000000-0000-4000-8000-000000000100 | 2 |
+| Avocado, Egg & Chili Toast | Breakfast | inherit | 00000000-0000-4000-8000-000000000102 | 1 |
+| Lemony Chickpea Crunch Salad | Lunch | members | 00000000-0000-4000-8000-000000000103 | 1 |
+| Roast Chicken Pesto Ciabatta | Lunch | public | 00000000-0000-4000-8000-000000000104 | 1 |
+| Sheet-Pan Lemon Herb Salmon & Vegetables | Dinner | public | 00000000-0000-4000-8000-000000000105 | 2 |
+| Creamy Mushroom Rigatoni | Dinner | public | 00000000-0000-4000-8000-000000000107 | 1 |
+| Dark Chocolate Raspberry Tart | Dessert | owner | 00000000-0000-4000-8000-000000000108 | 2 |
+| Honey Vanilla Panna Cotta with Berries | Dessert | public | 00000000-0000-4000-8000-00000000010a | 1 |
 
-The validator also runs in CI on PRs that touch `scripts/demo-seed/`; a tampered
-or stale file is rejected before merge.
+## Accounts
 
-## Restoring into a demo DATA_ROOT
+- `demo` (owner, id `00000000-0000-4000-8000-000000000001`) — password `demo123456`
+
+## Validating
 
 ```sh
-npm run cli:restore-demo-seed -- \
-  --output-dir scripts/demo-seed \
-  --data-root /data/demo \
-  --force
+npm run cli:validate-demo-seed -- --output-dir scripts/demo-seed
 ```
 
-The restore packs the seed files into a standard Marcia backup tarball in a
-temp dir and delegates to `restoreBackup` from `src/lib/backups/restore.ts`.
-That path already:
-- validates every document against its Zod schema,
-- asserts `recipe.media[i].fileName === "${id}.webp"`,
-- asserts every media file referenced by a recipe exists in the archive,
-- asserts every archive media file is referenced by a recipe,
-- requires at least one enabled owner account,
-- performs an atomic `DATA_ROOT` swap so reads during reset stay consistent.
+## Regenerating from a live instance
 
-In the demo host the workflow invokes the same script through a `tools`-profile
-Docker stage that shares the demo's data volume — see
-`.github/workflows/reset-demo.yml`.
+The seed can also be exported from a known-good Marcia instance:
+
+```sh
+npm run cli:generate-demo-seed -- \
+  --app-origin https://recipes-demo.inthesky.dev \
+  --username demo --password 'demo123456' \
+  --output-dir scripts/demo-seed
+```

@@ -1,0 +1,132 @@
+{
+  "schemaVersion": 2,
+  "id": "00000000-0000-4000-8000-000000000013",
+  "slug": "roast-chicken-pesto-ciabatta",
+  "previousSlugs": [],
+  "visibility": "public",
+  "title": "Roast Chicken Pesto Ciabatta",
+  "description": "Leftover roast chicken, basil pesto and melted mozzarella pressed between grilled ciabatta — a ten-minute lunch.",
+  "prepMinutes": 10,
+  "cookMinutes": 15,
+  "servings": 2,
+  "difficulty": "easy",
+  "category": "Lunch",
+  "tags": [
+    "lunch",
+    "sandwich",
+    "chicken",
+    "pesto",
+    "meal-prep",
+    "leftovers"
+  ],
+  "sourceUrl": "https://www.bbcgoodfood.com/recipes/collection/sandwich-recipes",
+  "bookTitle": null,
+  "bookAuthor": null,
+  "bookPage": null,
+  "ingredients": [
+    {
+      "id": "00000000-0000-4000-8000-00000000021e",
+      "order": 0,
+      "quantity": 1,
+      "unit": "loaf",
+      "name": "ciabatta",
+      "note": "about 250 g, halved horizontally"
+    },
+    {
+      "id": "00000000-0000-4000-8000-00000000021f",
+      "order": 1,
+      "quantity": 150,
+      "unit": "g",
+      "name": "leftover roast chicken",
+      "note": "shredded"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000220",
+      "order": 2,
+      "quantity": 4,
+      "unit": "tbsp",
+      "name": "basil pesto",
+      "note": null
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000221",
+      "order": 3,
+      "quantity": 125,
+      "unit": "g",
+      "name": "mozzarella ball",
+      "note": "drained, thickly sliced"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000222",
+      "order": 4,
+      "quantity": 1,
+      "unit": "",
+      "name": "roasted red pepper",
+      "note": "from a jar, drained and sliced"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000223",
+      "order": 5,
+      "quantity": 1,
+      "unit": "handful",
+      "name": "rocket",
+      "note": "arugula"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000224",
+      "order": 6,
+      "quantity": 1,
+      "unit": "tbsp",
+      "name": "olive oil",
+      "note": "for brushing"
+    }
+  ],
+  "steps": [
+    {
+      "id": "00000000-0000-4000-8000-000000000313",
+      "order": 0,
+      "text": "Heat the oven grill to high. Cut the ciabatta in half horizontally and toast the cut sides, 1–2 minutes, until lightly golden."
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000314",
+      "order": 1,
+      "text": "Spread the pesto generously over both toasted faces."
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000315",
+      "order": 2,
+      "text": "Pile the shredded chicken, mozzarella and roasted pepper onto the bottom half."
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000316",
+      "order": 3,
+      "text": "Grill open-faced for 2–3 minutes until the mozzarella melts and starts to bubble."
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000317",
+      "order": 4,
+      "text": "Pile on the rocket, close the sandwich and press gently so the filling stays put."
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000318",
+      "order": 5,
+      "text": "Cut in half on the diagonal and serve warm."
+    }
+  ],
+  "notesMarkdown": "## Making ahead\n\nAssemble (without the rocket) the night before and keep wrapped in the fridge.\nGrill cold — the ciabatta gets properly crisp as it heats through.\n\n## Swaps\n\n- **Pesto:** sun-dried-tomato or rocket pesto work just as well.\n- **Chicken:** sliced grilled halloumi makes a great vegetarian version.\n- Add **grilled courgette ribbons** when they are in season.\n",
+  "media": [
+    {
+      "id": "00000000-0000-4000-8000-000000000104",
+      "fileName": "00000000-0000-4000-8000-000000000104.webp",
+      "alt": "Freshly made ciabatta sandwich with cheese, tomato and herbs on a rustic wooden table",
+      "width": 1600,
+      "height": 1040,
+      "bytes": 227662,
+      "isPrimary": true,
+      "createdAt": "2026-08-13T01:57:47.185Z"
+    }
+  ],
+  "archivedAt": null,
+  "createdAt": "2026-08-13T01:57:47.185Z",
+  "updatedAt": "2026-08-13T01:57:47.185Z"
+}

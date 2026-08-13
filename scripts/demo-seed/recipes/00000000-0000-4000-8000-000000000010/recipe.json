@@ -1,0 +1,163 @@
+{
+  "schemaVersion": 2,
+  "id": "00000000-0000-4000-8000-000000000010",
+  "slug": "blueberry-buttermilk-pancakes",
+  "previousSlugs": [],
+  "visibility": "public",
+  "title": "Blueberry Buttermilk Pancakes",
+  "description": "Tender, tall buttermilk pancakes folded with a double hit of blueberry — fresh berries in the batter and more scattered on top.",
+  "prepMinutes": 15,
+  "cookMinutes": 20,
+  "servings": 4,
+  "difficulty": "easy",
+  "category": "Breakfast",
+  "tags": [
+    "breakfast",
+    "pancakes",
+    "blueberries",
+    "buttermilk",
+    "vegetarian",
+    "weekend"
+  ],
+  "sourceUrl": "https://www.bbcgoodfood.com/recipes/american-pancakes",
+  "bookTitle": null,
+  "bookAuthor": null,
+  "bookPage": null,
+  "ingredients": [
+    {
+      "id": "00000000-0000-4000-8000-000000000200",
+      "order": 0,
+      "quantity": 250,
+      "unit": "g",
+      "name": "plain flour",
+      "note": null
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000201",
+      "order": 1,
+      "quantity": 2,
+      "unit": "tbsp",
+      "name": "caster sugar",
+      "note": null
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000202",
+      "order": 2,
+      "quantity": 2,
+      "unit": "tsp",
+      "name": "baking powder",
+      "note": null
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000203",
+      "order": 3,
+      "quantity": 0.5,
+      "unit": "tsp",
+      "name": "bicarbonate of soda",
+      "note": "plus a pinch of fine salt"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000204",
+      "order": 4,
+      "quantity": 2,
+      "unit": "large",
+      "name": "eggs",
+      "note": "beaten"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000205",
+      "order": 5,
+      "quantity": 400,
+      "unit": "ml",
+      "name": "buttermilk",
+      "note": "or 400 ml whole milk plus 1 tbsp lemon juice"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000206",
+      "order": 6,
+      "quantity": 50,
+      "unit": "g",
+      "name": "unsalted butter",
+      "note": "melted, plus a knob for the pan"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000207",
+      "order": 7,
+      "quantity": 150,
+      "unit": "g",
+      "name": "fresh blueberries",
+      "note": "100 g for the batter, rest to serve"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000208",
+      "order": 8,
+      "quantity": null,
+      "unit": null,
+      "name": "maple syrup",
+      "note": "to serve"
+    }
+  ],
+  "steps": [
+    {
+      "id": "00000000-0000-4000-8000-000000000300",
+      "order": 0,
+      "text": "Whisk the flour, sugar, baking powder, bicarbonate of soda and a pinch of salt in a large bowl."
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000301",
+      "order": 1,
+      "text": "Beat the eggs and buttermilk together, then stir in the melted butter."
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000302",
+      "order": 2,
+      "text": "Pour the wet mixture into the dry and fold until just combined — a few lumps are fine; do not overmix."
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000303",
+      "order": 3,
+      "text": "Fold in 100 g of the blueberries."
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000304",
+      "order": 4,
+      "text": "Melt a knob of butter in a non-stick frying pan over medium heat and drop in 60 ml ladles of batter."
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000305",
+      "order": 5,
+      "text": "Cook until bubbles pop on the surface, flip, then cook 1–2 minutes more until deep golden."
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000306",
+      "order": 6,
+      "text": "Keep warm on a plate under a clean tea towel while you cook the rest; serve stacked with the remaining blueberries and maple syrup."
+    }
+  ],
+  "notesMarkdown": "## Tips\n\n- **Do not overmix.** A smooth batter means tough pancakes; stop as soon as the flour disappears.\n- Keep the pan heat *medium*, not high — the outside burns before the middle sets.\n\n> Lumps are your friend: they are pockets of lightness in the finished pancake.\n\n## Make ahead\n\nThe dry mix keeps for a month in a sealed jar. The cooked pancakes freeze well —\ncool, stack with baking paper between, and re-toast straight from frozen.\n\n## Substitutions\n\n- No buttermilk? Use milk soured with lemon juice (see the ingredient note).\n- Frozen blueberries work without defrosting — toss them in the flour first so they don't bleed.\n",
+  "media": [
+    {
+      "id": "00000000-0000-4000-8000-000000000100",
+      "fileName": "00000000-0000-4000-8000-000000000100.webp",
+      "alt": "Stack of blueberry pancakes on a dark plate against a black studio background",
+      "width": 1067,
+      "height": 1600,
+      "bytes": 30596,
+      "isPrimary": true,
+      "createdAt": "2026-08-13T01:57:47.185Z"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000101",
+      "fileName": "00000000-0000-4000-8000-000000000101.webp",
+      "alt": "Fluffy pancakes topped with blueberries and berry syrup, sprinkled with sugar",
+      "width": 1200,
+      "height": 1600,
+      "bytes": 254688,
+      "isPrimary": false,
+      "createdAt": "2026-08-13T01:57:47.185Z"
+    }
+  ],
+  "archivedAt": null,
+  "createdAt": "2026-08-13T01:57:47.185Z",
+  "updatedAt": "2026-08-13T01:57:47.185Z"
+}

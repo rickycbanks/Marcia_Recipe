@@ -1,0 +1,21 @@
+{
+  "schemaVersion": 1,
+  "id": "00000000-0000-4000-8000-000000000001",
+  "username": "demo",
+  "displayName": "Demo",
+  "password": {
+    "algo": "scrypt",
+    "N": 16384,
+    "r": 8,
+    "p": 1,
+    "salt": "FmjX/viP86IvdHPr75AAhQ==",
+    "hash": "SIkpfSasJceqGKu7YTbzpgQDjclihHSbSsEP3Gx+ppKQnY8vFZM/9vb/7zHRa150AVx4lBG2LZA9ogNbXsP1xQ=="
+  },
+  "type": "owner",
+  "capabilities": [],
+  "sessionVersion": 1,
+  "disabledAt": null,
+  "createdViaInvitationId": null,
+  "createdAt": "2026-08-13T01:57:47.185Z",
+  "updatedAt": "2026-08-13T01:57:47.185Z"
+}

@@ -1,0 +1,140 @@
+{
+  "schemaVersion": 2,
+  "id": "00000000-0000-4000-8000-000000000011",
+  "slug": "avocado-egg-chili-toast",
+  "previousSlugs": [],
+  "visibility": "inherit",
+  "title": "Avocado, Egg & Chili Toast",
+  "description": "A ten-minute breakfast of toasted sourdough, lemon-smashed avocado, a jammy egg and a slick of chilli crisp.",
+  "prepMinutes": 5,
+  "cookMinutes": 5,
+  "servings": 1,
+  "difficulty": "easy",
+  "category": "Breakfast",
+  "tags": [
+    "breakfast",
+    "toast",
+    "avocado",
+    "egg",
+    "quick",
+    "vegetarian"
+  ],
+  "sourceUrl": null,
+  "bookTitle": null,
+  "bookAuthor": null,
+  "bookPage": null,
+  "ingredients": [
+    {
+      "id": "00000000-0000-4000-8000-000000000209",
+      "order": 0,
+      "quantity": 1,
+      "unit": "large",
+      "name": "thick sourdough slice",
+      "note": "cut from the middle of the loaf"
+    },
+    {
+      "id": "00000000-0000-4000-8000-00000000020a",
+      "order": 1,
+      "quantity": 1,
+      "unit": "ripe",
+      "name": "avocado",
+      "note": "halved, stone removed"
+    },
+    {
+      "id": "00000000-0000-4000-8000-00000000020b",
+      "order": 2,
+      "quantity": 0.5,
+      "unit": "",
+      "name": "lemon",
+      "note": "juice"
+    },
+    {
+      "id": "00000000-0000-4000-8000-00000000020c",
+      "order": 3,
+      "quantity": 1,
+      "unit": "large",
+      "name": "egg",
+      "note": "at room temperature"
+    },
+    {
+      "id": "00000000-0000-4000-8000-00000000020d",
+      "order": 4,
+      "quantity": 1,
+      "unit": "tsp",
+      "name": "chilli crisp",
+      "note": "or chilli oil"
+    },
+    {
+      "id": "00000000-0000-4000-8000-00000000020e",
+      "order": 5,
+      "quantity": 1,
+      "unit": "tsp",
+      "name": "olive oil",
+      "note": null
+    },
+    {
+      "id": "00000000-0000-4000-8000-00000000020f",
+      "order": 6,
+      "quantity": 1,
+      "unit": "tbsp",
+      "name": "coriander",
+      "note": "roughly chopped"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000210",
+      "order": 7,
+      "quantity": null,
+      "unit": null,
+      "name": "sea salt flakes and black pepper",
+      "note": "to taste"
+    }
+  ],
+  "steps": [
+    {
+      "id": "00000000-0000-4000-8000-000000000307",
+      "order": 0,
+      "text": "Bring a small pan of water to a gentle simmer and lower in the egg; cook for 6–7 minutes for a jammy yolk."
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000308",
+      "order": 1,
+      "text": "Meanwhile, toast the sourdough until deep golden on both sides."
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000309",
+      "order": 2,
+      "text": "Scoop the avocado into a bowl and roughly smash with the lemon juice and a pinch of salt — keep it chunky."
+    },
+    {
+      "id": "00000000-0000-4000-8000-00000000030a",
+      "order": 3,
+      "text": "Drain the egg, cool briefly under cold running water, then peel and halve."
+    },
+    {
+      "id": "00000000-0000-4000-8000-00000000030b",
+      "order": 4,
+      "text": "Spread the avocado on the toast, top with the egg halves, and drizzle with the chilli crisp and olive oil."
+    },
+    {
+      "id": "00000000-0000-4000-8000-00000000030c",
+      "order": 5,
+      "text": "Finish with the coriander, salt flakes and a good grind of black pepper."
+    }
+  ],
+  "notesMarkdown": "## Cooking the egg\n\nFor a **runny** yolk, drop the egg into barely simmering water for 5 minutes;\nfor a fully set yolk, go to 8. A jammy 6–7 minutes is the sweet spot for toast.\n\n## Substitutions\n\n- **Vegan:** use soft silken tofu instead of the egg and leave out the coriander.\n- Swap chilli crisp for smoked chilli flakes and a squeeze of lime.\n\n## Storage\n\nThis one is strictly *eat immediately* — the avocado browns fast.\n",
+  "media": [
+    {
+      "id": "00000000-0000-4000-8000-000000000102",
+      "fileName": "00000000-0000-4000-8000-000000000102.webp",
+      "alt": "Avocado toast topped with sunny-side-up eggs on a wooden board",
+      "width": 1067,
+      "height": 1600,
+      "bytes": 68228,
+      "isPrimary": true,
+      "createdAt": "2026-08-13T01:57:47.185Z"
+    }
+  ],
+  "archivedAt": null,
+  "createdAt": "2026-08-13T01:57:47.185Z",
+  "updatedAt": "2026-08-13T01:57:47.185Z"
+}

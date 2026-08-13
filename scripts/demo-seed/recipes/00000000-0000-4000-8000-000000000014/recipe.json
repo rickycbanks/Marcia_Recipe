@@ -1,0 +1,166 @@
+{
+  "schemaVersion": 2,
+  "id": "00000000-0000-4000-8000-000000000014",
+  "slug": "sheet-pan-lemon-herb-salmon-vegetables",
+  "previousSlugs": [],
+  "visibility": "public",
+  "title": "Sheet-Pan Lemon Herb Salmon & Vegetables",
+  "description": "One tray of lemon-butter salmon, baby potatoes and tenderstem broccoli with a garlicky herb dressing — all in under 45 minutes.",
+  "prepMinutes": 15,
+  "cookMinutes": 25,
+  "servings": 4,
+  "difficulty": "easy",
+  "category": "Dinner",
+  "tags": [
+    "dinner",
+    "salmon",
+    "sheet-pan",
+    "one-pan",
+    "weeknight",
+    "healthy"
+  ],
+  "sourceUrl": null,
+  "bookTitle": "Dinner: Changing the Game",
+  "bookAuthor": "Melissa Clark",
+  "bookPage": null,
+  "ingredients": [
+    {
+      "id": "00000000-0000-4000-8000-000000000225",
+      "order": 0,
+      "quantity": 4,
+      "unit": "x 150 g",
+      "name": "salmon fillets",
+      "note": "skin on, pin-boned"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000226",
+      "order": 1,
+      "quantity": 600,
+      "unit": "g",
+      "name": "baby potatoes",
+      "note": "halved"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000227",
+      "order": 2,
+      "quantity": 300,
+      "unit": "g",
+      "name": "tenderstem broccoli",
+      "note": "trimmed"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000228",
+      "order": 3,
+      "quantity": 2,
+      "unit": "",
+      "name": "lemons",
+      "note": "1 zested and juiced, 1 thinly sliced"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000229",
+      "order": 4,
+      "quantity": 3,
+      "unit": "tbsp",
+      "name": "olive oil",
+      "note": "divided"
+    },
+    {
+      "id": "00000000-0000-4000-8000-00000000022a",
+      "order": 5,
+      "quantity": 2,
+      "unit": "cloves",
+      "name": "garlic",
+      "note": "finely grated"
+    },
+    {
+      "id": "00000000-0000-4000-8000-00000000022b",
+      "order": 6,
+      "quantity": 20,
+      "unit": "g",
+      "name": "fresh dill",
+      "note": "finely chopped"
+    },
+    {
+      "id": "00000000-0000-4000-8000-00000000022c",
+      "order": 7,
+      "quantity": 10,
+      "unit": "g",
+      "name": "fresh parsley",
+      "note": "finely chopped"
+    },
+    {
+      "id": "00000000-0000-4000-8000-00000000022d",
+      "order": 8,
+      "quantity": 30,
+      "unit": "g",
+      "name": "butter",
+      "note": "melted"
+    },
+    {
+      "id": "00000000-0000-4000-8000-00000000022e",
+      "order": 9,
+      "quantity": null,
+      "unit": null,
+      "name": "flaky sea salt and black pepper",
+      "note": "to taste"
+    }
+  ],
+  "steps": [
+    {
+      "id": "00000000-0000-4000-8000-000000000319",
+      "order": 0,
+      "text": "Heat the oven to 220°C fan. Toss the potatoes with 2 tbsp olive oil and plenty of salt, spread over a large baking tray and roast for 15 minutes."
+    },
+    {
+      "id": "00000000-0000-4000-8000-00000000031a",
+      "order": 1,
+      "text": "Meanwhile, whisk the lemon juice and zest, garlic, dill, parsley, melted butter and the remaining olive oil into a herb dressing."
+    },
+    {
+      "id": "00000000-0000-4000-8000-00000000031b",
+      "order": 2,
+      "text": "Push the potatoes to the edges of the tray, tuck in the broccoli and lemon slices, and lay the salmon fillets skin-side down in the middle."
+    },
+    {
+      "id": "00000000-0000-4000-8000-00000000031c",
+      "order": 3,
+      "text": "Brush the salmon with half the dressing and season everything well."
+    },
+    {
+      "id": "00000000-0000-4000-8000-00000000031d",
+      "order": 4,
+      "text": "Roast for 12–14 minutes, until the salmon is just opaque and flakes easily and the broccoli is charred at the tips."
+    },
+    {
+      "id": "00000000-0000-4000-8000-00000000031e",
+      "order": 5,
+      "text": "Rest for 2 minutes, then drizzle with the remaining dressing and serve straight from the tray."
+    }
+  ],
+  "notesMarkdown": "## Timing\n\nThicker fillets (about 4 cm) need the full 14 minutes; thin tail fillets can be done in 9–10.\nCheck early — **salmon keeps cooking** after it leaves the oven.\n\n## Swap the veg\n\nUse whatever the tray can hold: **asparagus, green beans, courgette** or fennel all roast\nwell at the same temperature. Just stagger the timings by size.\n\n## Leftovers\n\nFlake the cold salmon over a green salad for lunch the next day. The dressing doubles\nas a vinaigrette if you add a spoonful of Dijon.\n",
+  "media": [
+    {
+      "id": "00000000-0000-4000-8000-000000000105",
+      "fileName": "00000000-0000-4000-8000-000000000105.webp",
+      "alt": "Grilled salmon fillet served with colourful roasted vegetables",
+      "width": 1600,
+      "height": 1067,
+      "bytes": 71644,
+      "isPrimary": true,
+      "createdAt": "2026-08-13T01:57:47.185Z"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000106",
+      "fileName": "00000000-0000-4000-8000-000000000106.webp",
+      "alt": "Fresh salmon with red peppers, mushrooms and pumpkin seeds",
+      "width": 900,
+      "height": 1600,
+      "bytes": 164214,
+      "isPrimary": false,
+      "createdAt": "2026-08-13T01:57:47.185Z"
+    }
+  ],
+  "archivedAt": null,
+  "createdAt": "2026-08-13T01:57:47.185Z",
+  "updatedAt": "2026-08-13T01:57:47.185Z"
+}
