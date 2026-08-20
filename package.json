@@ -23,9 +23,11 @@
     "cli:restore": "tsx scripts/restore.ts",
     "cli:migrate": "tsx scripts/migrate.ts",
     "cli:rebuild-indexes": "tsx scripts/rebuild-indexes.ts",
+    "cli:rebuild-suggestions": "tsx scripts/rebuild-suggestions.ts",
     "icons": "tsx scripts/generate-icons.ts"
   },
   "dependencies": {
+    "@headlessui/react": "^2.2.10",
     "@serwist/next": "9.5.12",
     "archiver": "^8.0.0",
     "cheerio": "1.2.0",

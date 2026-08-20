@@ -3,6 +3,9 @@
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useRef, useState, type FormEvent, type KeyboardEvent } from "react";
 import { recipeDraftSchema } from "@/lib/validation/schemas";
+import { MAX_TAGS } from "@/lib/validation/constants";
+import { AutocompleteInput } from "@/components/AutocompleteInput";
+import { TagInput } from "@/components/TagInput";
 import { ImportPanel, type ImportedDraft } from "./ImportPanel";
 import { MediaManager } from "./MediaManager";
 import { StagedMediaManager, type StagedMediaItem } from "./StagedMediaManager";
@@ -25,7 +28,7 @@ export interface RecipeEditorInitial {
   servings: string;
   difficulty: "" | "easy" | "medium" | "hard";
   category: string;
-  tags: string;
+  tags: string[];
   sourceUrl: string;
   bookTitle: string;
   bookAuthor: string;
@@ -45,7 +48,7 @@ export const EMPTY_RECIPE: RecipeEditorInitial = {
   servings: "",
   difficulty: "",
   category: "",
-  tags: "",
+  tags: [],
   sourceUrl: "",
   bookTitle: "",
   bookAuthor: "",
@@ -90,6 +93,40 @@ export function RecipeEditor({ initial }: { initial: RecipeEditorInitial }) {
   const [dragOverStep, setDragOverStep] = useState<number | null>(null);
   const ingredientRefs = useRef<(HTMLInputElement | null)[]>([]);
   const stepRefs = useRef<(HTMLTextAreaElement | null)[]>([]);
+  const priorSuggestionsRef = useRef<{
+    categories: string[];
+    tags: string[];
+    bookTitles: string[];
+    bookAuthors: string[];
+  } | null>(null);
+  const [suggestions, setSuggestions] = useState<{
+    categories: string[];
+    tags: string[];
+    bookTitles: string[];
+    bookAuthors: string[];
+  } | null>(null);
+
+  useEffect(() => {
+    const controller = new AbortController();
+    fetch("/api/suggestion-index", { signal: controller.signal })
+      .then((r) => (r.ok ? r.json() : null))
+      .then((data) => {
+        if (data && !controller.signal.aborted) {
+          const next = {
+            categories: data.categories ?? [],
+            tags: data.tags ?? [],
+            bookTitles: data.bookTitles ?? [],
+            bookAuthors: data.bookAuthors ?? [],
+          };
+          priorSuggestionsRef.current = next;
+          setSuggestions(next);
+        }
+      })
+      .catch(() => {
+        /* autocomplete is best-effort */
+      });
+    return () => controller.abort();
+  }, []);
 
   const set = <K extends keyof RecipeEditorInitial>(key: K, value: RecipeEditorInitial[K]) => {
     setDirty(true);
@@ -166,7 +203,7 @@ export function RecipeEditor({ initial }: { initial: RecipeEditorInitial }) {
       cookMinutes: draft.cookMinutes !== null ? String(draft.cookMinutes) : "",
       servings: draft.servings !== null ? String(draft.servings) : "",
       category: draft.category ?? "",
-      tags: draft.tags.join(", "),
+      tags: draft.tags,
       sourceUrl: draft.sourceUrl ?? "",
       ingredients:
         draft.ingredients.length > 0
@@ -193,7 +230,6 @@ export function RecipeEditor({ initial }: { initial: RecipeEditorInitial }) {
     difficulty: form.difficulty === "" ? null : form.difficulty,
     category: form.category.trim() || null,
     tags: form.tags
-      .split(",")
       .map((t) => t.trim().replace(/^#/, ""))
       .filter(Boolean),
     sourceUrl: form.sourceUrl.trim() || null,
@@ -250,6 +286,32 @@ export function RecipeEditor({ initial }: { initial: RecipeEditorInitial }) {
       setTopError(body?.error ?? "Could not save the recipe.");
       return;
     }
+    // Optimistically merge newly-entered values into the local suggestion
+    // state so the next editor open instantly suggests them.
+    setSuggestions((prev) => {
+      if (!prev) return prev;
+      const merge = (existing: string[], incoming: string[]) => {
+        const merged = new Set(existing.map((v) => v.toLowerCase()));
+        const result = [...existing];
+        for (const v of incoming) {
+          const key = v.trim().toLowerCase();
+          if (key && !merged.has(key)) {
+            merged.add(key);
+            result.push(v.trim());
+          }
+        }
+        return result.sort((a, b) => a.localeCompare(b));
+      };
+      const cat = form.category.trim();
+      const bookT = form.bookTitle.trim();
+      const bookA = form.bookAuthor.trim();
+      return {
+        categories: cat ? merge(prev.categories, [cat]) : prev.categories,
+        tags: merge(prev.tags, form.tags),
+        bookTitles: bookT ? merge(prev.bookTitles, [bookT]) : prev.bookTitles,
+        bookAuthors: bookA ? merge(prev.bookAuthors, [bookA]) : prev.bookAuthors,
+      };
+    });
     if (!isEdit) {
       const created = (await response.json()) as { id?: string };
       if (created.id) {
@@ -469,13 +531,13 @@ export function RecipeEditor({ initial }: { initial: RecipeEditorInitial }) {
               <label htmlFor="category" className="label">
                 Category
               </label>
-              <input
+              <AutocompleteInput
                 id="category"
-                className="input"
+                value={form.category}
+                onChange={(v) => set("category", v)}
+                suggestions={suggestions?.categories ?? []}
                 maxLength={60}
                 placeholder="e.g., Dinner, Dessert, Bread"
-                value={form.category}
-                onChange={(e) => set("category", e.target.value)}
                 aria-invalid={!!fieldError("category")}
                 aria-describedby={errorId("category")}
               />
@@ -485,16 +547,15 @@ export function RecipeEditor({ initial }: { initial: RecipeEditorInitial }) {
               <label htmlFor="tags" className="label">
                 Tags
               </label>
-              <input
+              <TagInput
                 id="tags"
-                className="input"
-                placeholder="e.g., vegetarian, quick, italian"
                 value={form.tags}
-                onChange={(e) => set("tags", e.target.value)}
+                onChange={(t) => set("tags", t)}
+                suggestions={suggestions?.tags ?? []}
+                maxTags={MAX_TAGS}
                 aria-invalid={!!fieldError("tags")}
                 aria-describedby={errorId("tags")}
               />
-              <p className="help-text mt-1">Separate tags with commas.</p>
               {renderFieldError("tags")}
             </div>
             <div className="sm:col-span-2">
@@ -533,13 +594,13 @@ export function RecipeEditor({ initial }: { initial: RecipeEditorInitial }) {
               <label htmlFor="bookTitle" className="label">
                 Book title
               </label>
-              <input
+              <AutocompleteInput
                 id="bookTitle"
-                className="input"
+                value={form.bookTitle}
+                onChange={(v) => set("bookTitle", v)}
+                suggestions={suggestions?.bookTitles ?? []}
                 maxLength={200}
                 placeholder="e.g., The Joy of Cooking"
-                value={form.bookTitle}
-                onChange={(e) => set("bookTitle", e.target.value)}
                 aria-invalid={!!fieldError("bookTitle")}
                 aria-describedby={errorId("bookTitle")}
               />
@@ -549,13 +610,13 @@ export function RecipeEditor({ initial }: { initial: RecipeEditorInitial }) {
               <label htmlFor="bookAuthor" className="label">
                 Book author
               </label>
-              <input
+              <AutocompleteInput
                 id="bookAuthor"
-                className="input"
+                value={form.bookAuthor}
+                onChange={(v) => set("bookAuthor", v)}
+                suggestions={suggestions?.bookAuthors ?? []}
                 maxLength={120}
                 placeholder="e.g., Rombauer & Becker"
-                value={form.bookAuthor}
-                onChange={(e) => set("bookAuthor", e.target.value)}
                 aria-invalid={!!fieldError("bookAuthor")}
                 aria-describedby={errorId("bookAuthor")}
               />

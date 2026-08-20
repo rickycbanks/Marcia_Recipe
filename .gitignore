@@ -24,8 +24,12 @@ public/sw.js
 
 # Secrets — never commit
 .env
-.env.local
-.env.*.local
+.env.*
+!.env.example
+*.key
+*.pem
+*.p12
+*.pfx
 
 # OS / editor cruft
 .DS_Store
@@ -47,7 +51,14 @@ local/
 cleanup.md
 IMPLEMENTATION_PLAN.md
 todo.txt
+recovery.md
 
 # Backups — only top-level, never match src/app/api/backups/ or src/lib/backups/
 /*.tar.gz
 /backups/
+
+# Oracle Cloud / fixkey local secrets (never commit)
+fixkey
+/home/ricky/.oci/
+oci_recovery.md
+oci_operations.md
