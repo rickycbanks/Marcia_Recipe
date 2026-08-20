@@ -5,7 +5,7 @@ import { newId, slugify } from "@/lib/ids";
 import { nowIso } from "@/lib/time";
 import { SCHEMA_VERSIONS } from "@/lib/validation/constants";
 import { recipeSchema } from "@/lib/validation/schemas";
-import { getSearchIndex, rebuildSearchIndex, resolveSlug } from "@/lib/storage/indexes";
+import { getSearchIndex, rebuildSearchIndex, rebuildSuggestionIndex, resolveSlug } from "@/lib/storage/indexes";
 import { withWriteLock } from "@/lib/storage/lock";
 import {
   deleteRecipeDir,
@@ -113,6 +113,7 @@ export async function createRecipe(account: Account, draft: RecipeDraft): Promis
     const recipe = materializeDraft(draft, { id: recipeId, slug, createdAt: nowIso(), media });
     await saveRecipe(recipe);
     await rebuildSearchIndex();
+    await rebuildSuggestionIndex();
     await audit({
       type: "recipe.created",
       actorAccountId: account.id,
@@ -150,6 +151,7 @@ export async function updateRecipe(account: Account, id: string, draft: RecipeDr
     });
     await saveRecipe(recipe);
     await rebuildSearchIndex();
+    await rebuildSuggestionIndex();
     await audit({
       type: "recipe.updated",
       actorAccountId: account.id,
@@ -169,6 +171,7 @@ export async function archiveRecipe(account: Account, id: string): Promise<Recip
     const recipe = { ...existing, archivedAt: nowIso(), updatedAt: nowIso() };
     await saveRecipe(recipe);
     await rebuildSearchIndex();
+    await rebuildSuggestionIndex();
     await audit({ type: "recipe.archived", actorAccountId: account.id, clientAddress: null, detail: { recipeId: id } });
     return recipe;
   });
@@ -182,6 +185,7 @@ export async function restoreRecipe(account: Account, id: string): Promise<Recip
     const recipe = { ...existing, archivedAt: null, updatedAt: nowIso() };
     await saveRecipe(recipe);
     await rebuildSearchIndex();
+    await rebuildSuggestionIndex();
     await audit({ type: "recipe.restored", actorAccountId: account.id, clientAddress: null, detail: { recipeId: id } });
     return recipe;
   });
@@ -213,6 +217,7 @@ export async function deleteRecipePermanently(account: Account, id: string): Pro
     }
     await deleteRecipeDir(id);
     await rebuildSearchIndex();
+    await rebuildSuggestionIndex();
     await audit({
       type: "recipe.updated",
       actorAccountId: account.id,

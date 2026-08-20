@@ -29,7 +29,7 @@ export default async function EditRecipePage({ params }: Props) {
           servings: recipe.servings !== null ? String(recipe.servings) : "",
           difficulty: recipe.difficulty ?? "",
           category: recipe.category ?? "",
-          tags: recipe.tags.join(", "),
+          tags: recipe.tags,
           sourceUrl: recipe.sourceUrl ?? "",
           bookTitle: recipe.bookTitle ?? "",
           bookAuthor: recipe.bookAuthor ?? "",

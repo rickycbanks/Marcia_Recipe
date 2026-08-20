@@ -301,6 +301,19 @@ export const searchIndexSchema = z.object({
   entries: z.array(searchIndexEntrySchema),
 });
 
+/* ----------------------------- suggestion index ---------------------------- */
+
+export const suggestionIndexSchema = z.object({
+  schemaVersion: z.literal(1),
+  builtAt: isoDateTimeSchema,
+  categories: z.array(z.string()),
+  tags: z.array(z.string()),
+  bookTitles: z.array(z.string()),
+  bookAuthors: z.array(z.string()),
+  ingredientUnits: z.array(z.string()),
+  ingredientNames: z.array(z.string()),
+});
+
 /* --------------------------------- audit log --------------------------------- */
 
 export const AUDIT_EVENT_TYPES = [

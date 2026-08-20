@@ -5,7 +5,7 @@ import { forbidden, notFound } from "@/lib/errors";
 import { assertUuid, newId } from "@/lib/ids";
 import { nowIso } from "@/lib/time";
 import { canViewRecipe } from "@/lib/authorization/visibility";
-import { rebuildSearchIndex } from "@/lib/storage/indexes";
+import { rebuildSearchIndex, rebuildSuggestionIndex } from "@/lib/storage/indexes";
 import { withWriteLock } from "@/lib/storage/lock";
 import { recipeMediaDir, getRecipe, saveRecipe } from "@/lib/storage/repositories/recipes";
 import { getSiteConfig } from "@/lib/storage/repositories/config";
@@ -54,6 +54,7 @@ export async function addMediaToRecipe(
       throw error;
     }
     await rebuildSearchIndex();
+    await rebuildSuggestionIndex();
     await audit({
       type: "media.uploaded",
       actorAccountId: account.id,
@@ -78,6 +79,7 @@ export async function removeMediaFromRecipe(account: Account, recipeId: string, 
       logger.warn("Removed media metadata but could not remove file", { recipeId, mediaId, error: String(error) });
     });
     await rebuildSearchIndex();
+    await rebuildSuggestionIndex();
     await audit({
       type: "media.deleted",
       actorAccountId: account.id,
