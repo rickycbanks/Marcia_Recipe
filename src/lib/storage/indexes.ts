@@ -1,6 +1,6 @@
-import type { Recipe, SearchIndex, SearchIndexEntry } from "@/types";
+import type { Recipe, SearchIndex, SearchIndexEntry, SuggestionIndex } from "@/types";
 import { nowIso } from "@/lib/time";
-import { searchIndexSchema } from "@/lib/validation/schemas";
+import { searchIndexSchema, suggestionIndexSchema } from "@/lib/validation/schemas";
 import { SCHEMA_VERSIONS } from "@/lib/validation/constants";
 import { readJson, writeJsonAtomic } from "./atomic";
 import { withLock } from "./lock";
@@ -81,4 +81,92 @@ export async function getSearchIndex(): Promise<SearchIndex> {
 export async function resolveSlug(slug: string): Promise<string | null> {
   const index = await getSearchIndex();
   return index.slugToId[slug] ?? null;
+}
+
+/* ----------------------------- suggestion index ---------------------------- */
+
+const suggestionIndexPath = () => resolveWithin("indexes", "suggestions.json");
+
+/**
+ * Collect unique, trimmed, case-folded values from recipes. The first-seen
+ * casing is preserved as the display value; case-folded forms are only used
+ * for deduplication.
+ */
+function collectUniqueSorted(recipes: Recipe[], extractor: (r: Recipe) => (string | null | undefined)[]): string[] {
+  const seen = new Map<string, string>();
+  for (const recipe of recipes) {
+    for (const raw of extractor(recipe)) {
+      const trimmed = raw?.trim();
+      if (!trimmed) continue;
+      const key = trimmed.toLowerCase();
+      if (!seen.has(key)) seen.set(key, trimmed);
+    }
+  }
+  return [...seen.values()].sort((a, b) => a.localeCompare(b));
+}
+
+/** Build the disposable suggestion index without consulting DATA_ROOT. */
+export function buildSuggestionIndex(recipes: Recipe[]): SuggestionIndex {
+  const categories = collectUniqueSorted(recipes, (r) => [r.category]);
+  const tags = collectUniqueSorted(recipes, (r) => r.tags);
+  const bookTitles = collectUniqueSorted(recipes, (r) => [r.bookTitle]);
+  const bookAuthors = collectUniqueSorted(recipes, (r) => [r.bookAuthor]);
+  const ingredientUnits = collectUniqueSorted(recipes, (r) => r.ingredients.map((i) => i.unit));
+
+  // Ingredient names: ordered by descending usage count (most-used first),
+  // preserving first-seen casing.
+  const nameCounts = new Map<string, { count: number; display: string }>();
+  for (const recipe of recipes) {
+    for (const ingredient of recipe.ingredients) {
+      const trimmed = ingredient.name.trim();
+      if (!trimmed) continue;
+      const key = trimmed.toLowerCase();
+      const existing = nameCounts.get(key);
+      if (existing) {
+        existing.count++;
+      } else {
+        nameCounts.set(key, { count: 1, display: trimmed });
+      }
+    }
+  }
+  const ingredientNames = [...nameCounts.values()]
+    .sort((a, b) => b.count - a.count || a.display.localeCompare(b.display))
+    .map((e) => e.display);
+
+  return {
+    schemaVersion: SCHEMA_VERSIONS.suggestionIndex,
+    builtAt: nowIso(),
+    categories,
+    tags,
+    bookTitles,
+    bookAuthors,
+    ingredientUnits,
+    ingredientNames,
+  };
+}
+
+/** Write an index for a root that is not the live DATA_ROOT (restore staging). */
+export async function writeSuggestionIndexAt(root: string, recipes: Recipe[]): Promise<SuggestionIndex> {
+  const index = buildSuggestionIndex(recipes);
+  await writeJsonAtomic(join(root, "indexes", "suggestions.json"), index);
+  return index;
+}
+
+/**
+ * Rebuild the disposable suggestion index from canonical recipe files.
+ */
+export async function rebuildSuggestionIndex(): Promise<SuggestionIndex> {
+  const recipes = await listRecipes();
+  const index = buildSuggestionIndex(recipes);
+  await writeJsonAtomic(suggestionIndexPath(), index);
+  return index;
+}
+
+/** Load the suggestion index, rebuilding when missing or unreadable. */
+export async function getSuggestionIndex(): Promise<SuggestionIndex> {
+  return withLock("root-swap", async () => {
+    const index = await readJson(suggestionIndexPath(), suggestionIndexSchema, { quarantine: quarantineFile });
+    if (index) return index;
+    return rebuildSuggestionIndex();
+  });
 }

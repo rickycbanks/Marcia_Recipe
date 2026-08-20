@@ -26,9 +26,11 @@
     "cli:generate-demo-seed": "tsx scripts/generate-demo-seed.ts",
     "cli:restore-demo-seed": "tsx scripts/restore-demo-seed.ts",
     "cli:validate-demo-seed": "tsx scripts/validate-demo-seed.ts",
+    "cli:rebuild-suggestions": "tsx scripts/rebuild-suggestions.ts",
     "icons": "tsx scripts/generate-icons.ts"
   },
   "dependencies": {
+    "@headlessui/react": "^2.2.10",
     "@serwist/next": "9.5.12",
     "archiver": "^8.0.0",
     "cheerio": "1.2.0",

@@ -13,6 +13,7 @@ import type {
   siteConfigSchema,
   recipeDraftSchema,
   searchIndexSchema,
+  suggestionIndexSchema,
   auditEventSchema,
 } from "@/lib/validation/schemas";
 
@@ -25,6 +26,7 @@ export type SiteConfig = z.infer<typeof siteConfigSchema>;
 export type RecipeDraft = z.infer<typeof recipeDraftSchema>;
 export type SearchIndex = z.infer<typeof searchIndexSchema>;
 export type SearchIndexEntry = SearchIndex["entries"][number];
+export type SuggestionIndex = z.infer<typeof suggestionIndexSchema>;
 export type AuditEvent = z.infer<typeof auditEventSchema>;
 
 export type AccountType = Account["type"];

@@ -7,6 +7,7 @@ export const SCHEMA_VERSIONS = {
   shoppingList: 1,
   siteConfig: 1,
   searchIndex: 1,
+  suggestionIndex: 1,
   backupManifest: 1,
 } as const;
 
