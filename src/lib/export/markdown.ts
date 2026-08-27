@@ -10,18 +10,13 @@
  * Markdown viewer or text editor.
  */
 import type { MealPlan, Recipe, ShoppingList } from "@/types";
+import { formatQuantity } from "@/lib/fractions";
 
 /* --------------------------------- recipe --------------------------------- */
 
-function formatQuantity(qty: number | null): string {
-  if (qty === null) return "";
-  // Drop trailing ".0" for whole numbers so "2" not "2.0".
-  return Number.isInteger(qty) ? String(qty) : String(qty);
-}
-
 function formatIngredientLine(ing: Recipe["ingredients"][number]): string {
   const parts: string[] = [];
-  const q = formatQuantity(ing.quantity);
+  const q = ing.quantity !== null ? formatQuantity(ing.quantity) : "";
   if (q) parts.push(q);
   if (ing.unit) parts.push(ing.unit);
   if (ing.name) parts.push(ing.name);
@@ -56,7 +51,7 @@ export function recipeToMarkdown(recipe: Recipe): string {
   if (prep && cook) meta.push(`**Prep:** ${prep}`, `**Cook:** ${cook}`, `**Total:** ${(recipe.prepMinutes ?? 0) + (recipe.cookMinutes ?? 0)} min`);
   else if (prep) meta.push(`**Prep:** ${prep}`);
   else if (cook) meta.push(`**Cook:** ${cook}`);
-  if (recipe.servings !== null) meta.push(`**Servings:** ${recipe.servings}`);
+  if (recipe.servings !== null) meta.push(`**Servings:** ${formatQuantity(recipe.servings)}`);
   if (recipe.difficulty) meta.push(`**Difficulty:** ${difficultyLabel(recipe.difficulty)}`);
   if (recipe.category) meta.push(`**Category:** ${recipe.category}`);
   if (recipe.tags.length > 0) meta.push(`**Tags:** ${recipe.tags.join(", ")}`);
@@ -193,7 +188,7 @@ export function shoppingListToMarkdown(list: ShoppingList): string {
 
 function formatShoppingItem(item: ShoppingList["items"][number]): string {
   const parts: string[] = [];
-  const q = formatQuantity(item.quantity);
+  const q = item.quantity !== null ? formatQuantity(item.quantity) : "";
   if (q) parts.push(q);
   if (item.unit) parts.push(item.unit);
   let line = parts.join(" ").trim();
