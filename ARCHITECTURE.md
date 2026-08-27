@@ -22,7 +22,7 @@ the project.
 | Validation | **Zod 4** | Every persisted and submitted document is validated. Schemas are the single source of truth for shapes. |
 | Image processing | **Sharp** | Fast native image decode, resize, and WebP conversion. Server-external package so it stays out of the bundle. |
 | Search | **Fuse.js** | Browser-side fuzzy search over a per-request index. No search server needed at this scale. |
-| OCR | **Tesseract.js** (browser) + optional **Mistral** (server) | Tesseract keeps OCR client-side with no API key; Mistral is an opt-in server alternative. |
+| OCR | **Tesseract.js** (browser) + **Mistral**, **Gemini** (server) | Tesseract runs client-side with no API key; Mistral and Gemini are server-side two-pass pipelines (OCR → structured extraction), configured via encrypted private config (`config/ocr.private.json`). Admin selects the site-wide provider; users cannot override. |
 | PWA | **Serwist** | Modern service-worker toolkit for Next.js. Precaches only the static shell. |
 | Locking | **proper-lockfile** | Cross-process filesystem locks — essential because backups must block writes briefly. |
 | Tests | **Vitest** (unit) + **Playwright** (e2e) | Vitest for storage/auth logic; Playwright for browser smoke tests. |
@@ -104,7 +104,8 @@ All mutable state lives under one configurable directory:
 ```
 DATA_ROOT/
 ├── config/
-│   └── site.json                 # Site settings (default visibility, theme)
+│   ├── site.json                 # Site settings (default visibility, theme)
+│   └── ocr.private.json          # Encrypted OCR provider config (AES-256-GCM envelope)
 ├── accounts/
 │   └── <account-id>.json          # One file per account
 ├── invitations/
@@ -273,11 +274,71 @@ All fetches go through `ssrfSafeFetch` (`fetch.ts`), which validates:
 
 ### 6.2 OCR
 
-- **Default**: browser-side **Tesseract.js** — no API key, no server round-trip for the image
-- **Optional**: server-side **Mistral OCR** when `MISTRAL_API_KEY` is set — the image is sent
-  to Mistral's API and never persisted; it returns a draft for review
-- Both produce text that is parsed by shared heuristics (`textParsing.ts`, `ocr.ts`)
-- The owner reviews and submits the recipe form before anything is saved
+The site-wide OCR provider is selected by the owner in Admin Settings (`/admin/settings`) and
+stored in encrypted form at `config/ocr.private.json`. The selection flow:
+
+1. **Private config exists** → use its `activeProvider` value.
+2. **No private config** + legacy `MISTRAL_API_KEY` env var → Mistral (backward compatibility).
+3. **Neither** → Tesseract (browser-side default).
+
+| Provider | Execution | Pipeline |
+| --- | --- | --- |
+| **Tesseract** | Browser-side (Tesseract.js) | Single-pass: image → text (no API key, no server round-trip). Always available. |
+| **Mistral** | Server-side two-pass | Pass 1: `mistral-ocr-latest` OCR endpoint → markdown. Pass 2: `ministral-3b-2512` Chat Completions with strict JSON Schema → structured recipe JSON. |
+| **Gemini** | Server-side two-pass | Pass 1: `gemini-3.5-flash-lite` vision/text → transcription markdown. Pass 2: same model → structured recipe JSON via the Google Generative Language REST API. |
+
+Cloud providers perform two sequential passes: first OCR the image to text, then extract structured
+recipe data (title, description, times, servings, ingredients with quantities/units, steps, notes).
+The structured result is converted to a `RecipeDraft` using the fraction-aware parser and validated
+with `recipeDraftSchema` before returning. If pass 2 fails or produces invalid output, the heuristic
+parser (`ocr.ts`) runs on pass-1 text as a fallback — surfaced to the caller as a status notice,
+not silently represented as AI-normalized.
+
+Users **cannot** choose or override the provider at import time — the admin-selected provider is
+used for all server-side OCR calls. Tesseract always runs in the browser; cloud providers run
+server-side. There is **no silent fallback** between providers — if a cloud provider is selected but
+misconfigured, the call fails with an actionable error. Tesseract never sends data to a second pass.
+
+Legacy providers (Veryfi, Google Document AI) are read compatibly and resolved to Tesseract until
+the owner saves a new selection. On save, only canonical provider fields are written.
+
+Cloud provider credentials are stored in the encrypted private config. Without `PRIVATE_CONFIG_KEYRING`
+the module cannot read or write encrypted config, and only browser-local Tesseract is available. When
+no private config exists and `MISTRAL_API_KEY` is set, Mistral is used as a legacy fallback (env key
+only, not encrypted).
+
+The extraction prompt and JSON schemas are fixed server-side. The prompt instructs the model to
+extract only source-supported information, preserve ingredients/steps, use null for unknown values,
+and return no prose outside structured output. No prompts, API keys, raw OCR text, or provider
+response bodies are logged.
+
+### 6.3 Encrypted private configuration
+
+Cloud OCR credentials are stored in `DATA_ROOT/config/ocr.private.json` as an **AES-256-GCM
+encrypted envelope** — plaintext is never written to disk.
+
+**Envelope format** (`v1`): `v1.<base64url-iv>.<base64url-ciphertext>.<base64url-tag>`
+
+- 12-byte random IV (initialization vector)
+- 16-byte authentication tag (GCM)
+- AAD (additional authenticated data) is the literal version string `v1`
+
+The `PRIVATE_CONFIG_KEYRING` environment variable holds one or more comma-separated
+`keyId:base64url(32-byte-key)` pairs. The **first** key encrypts; **all** keys decrypt.
+This supports key rotation: `--rotate` prepends a new key while retaining old entries, so
+existing encrypted data can still be decrypted with the previous key.
+
+`AUTH_SECRET` is **never** used for private config encryption — it is a separate secret used
+only for JWT signing.
+
+**Admin API**: The GET `/api/admin/ocr-settings` endpoint returns a sanitized view — configured
+provider booleans and keyring availability status. Secrets (API keys) are **never** exposed.
+The PATCH endpoint writes the encrypted envelope atomically (temp file → rename). Legacy provider
+fields (Google Document AI, Veryfi) are silently discarded on save.
+
+**Key rotation**: First encrypts with the new key; all existing keys remain for decryption.
+Rotating is: (1) run `cli:setup-private-config-keyring --rotate` to prepend a new key to the
+env var, (2) the next save re-encrypts with the new key. Old keys remain until explicitly removed.
 
 ---
 
@@ -297,6 +358,11 @@ All fetches go through `ssrfSafeFetch` (`fetch.ts`), which validates:
 - `npm run cli:backup` takes the `backup` lock (freezing writes briefly) and produces a
   versioned `.tar.gz` of all canonical data (config, accounts, invitations, recipes, personal
   data, media). Indexes, locks, and tmp are excluded.
+- Encrypted OCR configuration (`config/ocr.private.json`) is included in backups as an opaque
+  envelope. Restore validation checks the envelope shape (version, IV, ciphertext, tag
+  structure) without attempting decryption — actual decryption is governed by the keyring at
+  runtime. **Backup recovery requires the matching `PRIVATE_CONFIG_KEYRING`** — key loss makes
+  stored cloud credentials unrecoverable.
 - `npm run cli:restore` validates an archive **before** touching live data, supports
   `--dry-run`, and requires `--force` to replace an existing data root.
 - Web restore is gated behind a stable root-swap barrier (see `cleanup.md` for the release
