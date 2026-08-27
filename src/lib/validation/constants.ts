@@ -65,10 +65,16 @@ export const IMPORT_LIMITS = {
   maxRedirects: 3,
 } as const;
 
-/** Server-side Mistral OCR limits. */
+/**
+ * Server-side OCR limits. Two-pass cloud pipelines (Mistral, Gemini) make
+ * sequential calls; each pass has its own timeout. Tesseract runs client-side.
+ */
 export const OCR_LIMITS = {
   maxImageBytes: 10 * 1024 * 1024,
-  timeoutMs: 30_000,
+  /** Per-pass timeout for cloud OCR (pass 1 or pass 2). */
+  passTimeoutMs: 30_000,
+  /** Maximum text bytes sent to pass-2 structured extraction. */
+  maxOcrTextBytes: 100_000,
   allowedMimeTypes: ["image/png", "image/jpeg", "image/avif"] as const,
 } as const;
 
