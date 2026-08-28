@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useRef, useState, type FormEvent, type KeyboardEvent } from "react";
 import { recipeDraftSchema } from "@/lib/validation/schemas";
 import { MAX_TAGS } from "@/lib/validation/constants";
+import { parseQuantityInput, formatQuantity } from "@/lib/fractions";
 import { AutocompleteInput } from "@/components/AutocompleteInput";
 import { TagInput } from "@/components/TagInput";
 import { ImportPanel, type ImportedDraft } from "./ImportPanel";
@@ -208,7 +209,7 @@ export function RecipeEditor({ initial }: { initial: RecipeEditorInitial }) {
       ingredients:
         draft.ingredients.length > 0
           ? draft.ingredients.map((i) => ({
-              quantity: i.quantity !== null ? String(i.quantity) : "",
+              quantity: i.quantity !== null ? formatQuantity(i.quantity) : "",
               unit: i.unit ?? "",
               name: i.name,
               note: i.note ?? "",
@@ -239,7 +240,7 @@ export function RecipeEditor({ initial }: { initial: RecipeEditorInitial }) {
     ingredients: form.ingredients
       .filter((i) => !isBlankIngredient(i))
       .map((i) => ({
-        quantity: parseOptionalNumber(i.quantity),
+        quantity: parseQuantityInput(i.quantity),
         unit: i.unit.trim() || null,
         name: i.name.trim(),
         note: i.note.trim() || null,
@@ -250,16 +251,32 @@ export function RecipeEditor({ initial }: { initial: RecipeEditorInitial }) {
   });
 
   const validateClient = (): boolean => {
+    const errors: Record<string, string> = {};
+    let firstMessage: string | null = null;
+
+    // Pre-zod: flag nonblank quantity fields that are not valid numbers or fractions.
+    for (let idx = 0; idx < form.ingredients.length; idx++) {
+      const row = form.ingredients[idx]!;
+      if (isBlankIngredient(row)) continue;
+      const qty = row.quantity.trim();
+      if (qty && parseQuantityInput(qty) === null) {
+        const path = `ingredients.${idx}.quantity`;
+        errors[path] = "Enter a valid number or fraction (e.g. 1/2, 1.5, ¾)";
+        if (!firstMessage) firstMessage = errors[path];
+      }
+    }
+
     const payload = buildPayload();
     const result = recipeDraftSchema.safeParse(payload);
     if (!result.success) {
-      const errors: Record<string, string> = {};
-      let firstMessage: string | null = null;
       for (const issue of result.error.issues) {
         const path = issue.path.join(".");
         if (!errors[path]) errors[path] = issue.message;
         if (!firstMessage) firstMessage = issue.message;
       }
+    }
+
+    if (Object.keys(errors).length > 0) {
       setFieldErrors(errors);
       setTopError(firstMessage ?? "Please fix the highlighted fields before saving.");
       return false;
@@ -709,6 +726,8 @@ export function RecipeEditor({ initial }: { initial: RecipeEditorInitial }) {
               ref={(el) => {
                 ingredientRefs.current[index] = el;
               }}
+              aria-invalid={!!fieldError(`ingredients.${index}.quantity`)}
+              aria-describedby={errorId(`ingredients.${index}.quantity`)}
             />
             <input
               className="input w-24"
@@ -763,6 +782,9 @@ export function RecipeEditor({ initial }: { initial: RecipeEditorInitial }) {
                 ×
               </button>
             </div>
+            {fieldError(`ingredients.${index}.quantity`) ? (
+              <p className="help-text w-full text-danger" id={`error-ingredients-${index}-quantity`}>{fieldError(`ingredients.${index}.quantity`)}</p>
+            ) : null}
             {fieldError(`ingredients.${index}.name`) ? (
               <p className="help-text w-full text-danger">{fieldError(`ingredients.${index}.name`)}</p>
             ) : null}

@@ -7,9 +7,14 @@ import { OCR_LIMITS } from "@/lib/validation/constants";
 /**
  * Owner import panel:
  * - URL import: server fetches SSRF-safely and returns a DRAFT (never saves)
- * - OCR is handled by the server when configured. Recognized text is parsed into a
- *   draft for review. Nothing is persisted until the owner saves.
+ * - OCR is driven by the site-wide active provider (server-selected).
+ *   Tesseract: browser-local recognition → server text parse.
+ *   Cloud: image sent to the generic server route/dispatcher.
+ *   Clients cannot choose or force a provider.
  */
+
+export type OcrProvider = "tesseract" | "mistral" | "gemini";
+
 export interface ImportedDraft {
   title: string;
   description: string;
@@ -24,7 +29,9 @@ export interface ImportedDraft {
   notesMarkdown: string;
 }
 
-type OcrEngine = "tesseract" | "mistral";
+interface OcrCapability {
+  activeProvider: OcrProvider;
+}
 
 interface Props {
   onImport: (draft: ImportedDraft) => void;
@@ -35,22 +42,24 @@ export function ImportPanel({ onImport }: Props) {
   const [status, setStatus] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
-  // Browser OCR remains in the source for compatibility, but is not exposed.
-  const [ocrEngine] = useState<OcrEngine>("mistral");
-  const [mistralEnabled, setMistralEnabled] = useState(false);
+  const [ocrCapability, setOcrCapability] = useState<OcrCapability | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
+
+  const activeProvider = ocrCapability?.activeProvider ?? "tesseract";
+  const isCloudProvider = activeProvider !== "tesseract";
+  const ocrAvailable = true; // Tesseract is always available; cloud providers depend on config
 
   useEffect(() => {
     let cancelled = false;
     fetch("/api/import/ocr")
       .then((response) => (response.ok ? response.json() : null))
-      .then((body: { mistralEnabled?: unknown } | null) => {
-        if (!cancelled && body && typeof body.mistralEnabled === "boolean") {
-          setMistralEnabled(body.mistralEnabled);
+      .then((body: OcrCapability | null) => {
+        if (!cancelled && body && typeof body.activeProvider === "string") {
+          setOcrCapability(body);
         }
       })
       .catch(() => {
-        // Keep the explicit unavailable state when server OCR cannot be checked.
+        // Default to tesseract if the capability check fails
       });
     return () => {
       cancelled = true;
@@ -86,15 +95,13 @@ export function ImportPanel({ onImport }: Props) {
     }
   };
 
-  const recognizeImage = async (file: File) => {
+  /** Browser-local Tesseract OCR: preprocess → recognize → send text to server parser. */
+  const recognizeImageLocal = async (file: File) => {
     setBusy(true);
     setError(null);
     setStatus("Preparing image…");
     let worker: Awaited<ReturnType<typeof import("tesseract.js").createWorker>> | null = null;
     try {
-      // Preprocess in-browser (upscale + border + grayscale) for much better
-      // accuracy. If the canvas pipeline fails, fall back to the raw File so
-      // OCR still attempts recognition.
       let processed: Blob = file;
       try {
         processed = await preprocessImageForOcr(file);
@@ -102,11 +109,8 @@ export function ImportPanel({ onImport }: Props) {
         console.warn("Image preprocessing failed; using the raw image", preprocessErr);
       }
 
-      // Lazy-load Tesseract.js so it never affects server or page weight up front.
       const { createWorker, PSM } = await import("tesseract.js");
       worker = await createWorker("eng", 1, {
-        // tessdata_best gives the highest accuracy and is cached in IndexedDB
-        // after the first load.
         langPath: "https://tessdata.projectnaptha.com/4.0.0_best",
         logger: (m) => {
           if (m.status === "recognizing text") {
@@ -117,12 +121,9 @@ export function ImportPanel({ onImport }: Props) {
         },
       });
       await worker.setParameters({
-        // AUTO (3) lets Tesseract detect the column layout — recipe pages are
-        // often two-column (ingredients left, steps right), which SINGLE_BLOCK
-        // assumes away.
         tessedit_pageseg_mode: PSM.AUTO,
         preserve_interword_spaces: "1",
-        user_defined_dpi: "300", // without this Tesseract assumes 70 DPI → garbage
+        user_defined_dpi: "300",
       });
 
       const {
@@ -157,7 +158,8 @@ export function ImportPanel({ onImport }: Props) {
     }
   };
 
-  const recognizeImageViaMistral = async (file: File) => {
+  /** Server-side cloud OCR: send the image to the generic server route/dispatcher. */
+  const recognizeImageCloud = async (file: File) => {
     const allowed = OCR_LIMITS.allowedMimeTypes as readonly string[];
     if (!allowed.includes(file.type)) {
       setError("That image type isn't supported for server OCR. Use PNG, JPEG, or AVIF.");
@@ -173,14 +175,14 @@ export function ImportPanel({ onImport }: Props) {
       const response = await fetch("/api/import/ocr/image", { method: "POST", body: form });
       const body = (await response.json().catch(() => null)) as { draft?: ImportedDraft; error?: string } | null;
       if (!response.ok || !body?.draft) {
-        setError(body?.error ?? "Server OCR failed. Check that MISTRAL_API_KEY is set.");
+        setError(body?.error ?? "Server OCR failed. Check OCR provider settings in Admin Settings.");
         setStatus(null);
         return;
       }
       onImport(body.draft);
       setStatus("OCR draft loaded. Review below, then save.");
     } catch {
-      setError("Server OCR failed. Check that MISTRAL_API_KEY is set.");
+      setError("Server OCR failed. Check OCR provider settings in Admin Settings.");
       setStatus(null);
     } finally {
       setBusy(false);
@@ -190,8 +192,8 @@ export function ImportPanel({ onImport }: Props) {
 
   const handleFileChange = (file: File | undefined) => {
     if (!file) return;
-    if (ocrEngine === "mistral") void recognizeImageViaMistral(file);
-    else void recognizeImage(file);
+    if (isCloudProvider) void recognizeImageCloud(file);
+    else void recognizeImageLocal(file);
   };
 
   return (
@@ -230,13 +232,15 @@ export function ImportPanel({ onImport }: Props) {
             id="ocr-file"
             ref={fileRef}
             type="file"
-            accept={ocrEngine === "mistral" ? OCR_LIMITS.allowedMimeTypes.join(",") : "image/*"}
+            accept={isCloudProvider ? OCR_LIMITS.allowedMimeTypes.join(",") : "image/*"}
             className="input text-sm file:mr-3 file:rounded-md file:border-0 file:bg-muted file:px-3 file:py-1 file:text-sm file:font-medium file:text-foreground"
-            disabled={busy || !mistralEnabled}
+            disabled={busy || !ocrAvailable}
             onChange={(e) => handleFileChange(e.target.files?.[0])}
           />
           <p className="help-text">
-            {mistralEnabled ? "Upload a recipe photo for server OCR." : "OCR is currently unavailable. Ask the site owner to configure server OCR."}
+            {isCloudProvider
+              ? "Upload a recipe photo for server-side OCR."
+              : "Upload a recipe photo for browser-based OCR."}
           </p>
         </div>
       </div>

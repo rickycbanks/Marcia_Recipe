@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation";
 import { RecipeEditor } from "@/components/admin/RecipeEditor";
 import { getRecipeForOwner } from "@/lib/recipes/service";
+import { formatQuantity } from "@/lib/fractions";
 
 export const dynamic = "force-dynamic";
 export const metadata = { title: "Edit recipe" };
@@ -39,7 +40,7 @@ export default async function EditRecipePage({ params }: Props) {
               ? [...recipe.ingredients]
                   .sort((a, b) => a.order - b.order)
                   .map((i) => ({
-                    quantity: i.quantity !== null ? String(i.quantity) : "",
+                    quantity: i.quantity !== null ? formatQuantity(i.quantity) : "",
                     unit: i.unit ?? "",
                     name: i.name,
                     note: i.note ?? "",
