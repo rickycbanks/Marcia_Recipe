@@ -1,4 +1,5 @@
 import type { Ingredient } from "@/types";
+import { formatQuantity } from "@/lib/fractions";
 
 /**
  * Deterministic ingredient normalization + aggregation for shopping-list
@@ -90,9 +91,7 @@ export function formatAggregatedItem(item: AggregatedItem): string {
   return [qty, item.unit, titleCase(item.name)].filter(Boolean).join(" ");
 }
 
-export function formatQuantity(quantity: number): string {
-  return Number.isInteger(quantity) ? String(quantity) : quantity.toFixed(2).replace(/\.?0+$/, "");
-}
+export { formatQuantity } from "@/lib/fractions";
 
 function titleCase(value: string): string {
   return value.length > 0 ? value[0]!.toUpperCase() + value.slice(1) : value;

@@ -1,7 +1,7 @@
 import { z } from "zod";
 import { apiHandler, jsonOk, parseBody } from "@/lib/api";
 import { requireCapability } from "@/lib/authorization/guards";
-import { isMistralOcrConfigured } from "@/lib/imports/mistralOcr";
+import { getEffectiveOcrProvider } from "@/lib/config/ocrPrivate";
 import { parseOcrText } from "@/lib/imports/service";
 
 export const runtime = "nodejs";
@@ -19,7 +19,15 @@ export const POST = apiHandler(async (request) => {
   return jsonOk({ draft: parseOcrText(owner, text) });
 });
 
-/** Report which OCR engines are available for the import UI (no auth needed). */
+/**
+ * Report OCR capability metadata. The active provider is server-selected;
+ * clients cannot choose or force a provider.
+ */
 export const GET = apiHandler(async () => {
-  return jsonOk({ mistralEnabled: isMistralOcrConfigured() });
+  const activeProvider = await getEffectiveOcrProvider();
+  return jsonOk({
+    activeProvider,
+    mistralEnabled: activeProvider === "mistral",
+    geminiEnabled: activeProvider === "gemini",
+  });
 });

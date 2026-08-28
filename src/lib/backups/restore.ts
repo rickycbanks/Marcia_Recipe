@@ -275,6 +275,7 @@ async function ensureStagingLayout(root: string): Promise<void> {
 
 type RoutedDocument =
   | { kind: "siteConfig" }
+  | { kind: "ocrPrivateConfig" }
   | { kind: "account"; pathId: string }
   | { kind: "invitation"; pathId: string }
   | { kind: "recipe"; pathId: string }
@@ -283,6 +284,7 @@ type RoutedDocument =
 
 function routeDocument(name: string): RoutedDocument | null {
   if (name === "config/site.json") return { kind: "siteConfig" };
+  if (name === "config/ocr.private.json") return { kind: "ocrPrivateConfig" };
   let match = name.match(new RegExp(`^accounts/(${UUID_PATH})\\.json$`));
   if (match?.[1]) return { kind: "account", pathId: match[1] };
   match = name.match(new RegExp(`^invitations/(${UUID_PATH})\\.json$`));
@@ -336,6 +338,27 @@ async function validateStagedRoot(stage: ExtractedArchive, manifest: RestoreMani
     const route = routeDocument(name);
     if (!route) {
       problems.push(`${name}: does not match any known document location`);
+      continue;
+    }
+
+    // The encrypted OCR config is an opaque envelope, not valid JSON.
+    // Validate the envelope shape to reject obviously malformed files before
+    // root activation; actual decryption is governed by the keyring at runtime.
+    if (route.kind === "ocrPrivateConfig") {
+      let envelopeRaw: string;
+      try {
+        envelopeRaw = await readFile(join(stage.root, name), "utf8");
+      } catch (err) {
+        if (isFilesystemError(err)) throw filesystemError(err);
+        problems.push(`${name}: could not read file`);
+        continue;
+      }
+      const { isValidEnvelopeShape } = await import("@/lib/config/ocrCrypto");
+      if (!isValidEnvelopeShape(envelopeRaw)) {
+        problems.push(`${name}: malformed encrypted envelope`);
+        continue;
+      }
+      jsonDocumentsValidated += 1;
       continue;
     }
 

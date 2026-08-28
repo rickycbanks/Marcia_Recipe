@@ -24,6 +24,7 @@
     "cli:migrate": "tsx scripts/migrate.ts",
     "cli:rebuild-indexes": "tsx scripts/rebuild-indexes.ts",
     "cli:rebuild-suggestions": "tsx scripts/rebuild-suggestions.ts",
+    "cli:setup-private-config-keyring": "tsx scripts/setup-private-config-keyring.ts",
     "icons": "tsx scripts/generate-icons.ts"
   },
   "dependencies": {
