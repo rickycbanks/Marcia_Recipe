@@ -16,6 +16,7 @@ services:
       AUTH_URL: ${AUTH_URL:-${APP_ORIGIN:-http://localhost:3000}}
       NEXTAUTH_URL: ${AUTH_URL:-${APP_ORIGIN:-http://localhost:3000}}
       MISTRAL_API_KEY: ${MISTRAL_API_KEY:-}
+      PRIVATE_CONFIG_KEYRING: ${PRIVATE_CONFIG_KEYRING:-}
     volumes:
       - marcia_personal_data:/data
     healthcheck:
