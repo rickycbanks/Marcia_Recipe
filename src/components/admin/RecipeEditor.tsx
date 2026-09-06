@@ -84,6 +84,7 @@ export function RecipeEditor({ initial }: { initial: RecipeEditorInitial }) {
   const isEdit = !!initial.id;
   const [form, setForm] = useState(initial);
   const [busy, setBusy] = useState(false);
+  const [mediaBusy, setMediaBusy] = useState(false);
   const [topError, setTopError] = useState<string | null>(null);
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   const [dirty, setDirty] = useState(false);
@@ -288,7 +289,7 @@ export function RecipeEditor({ initial }: { initial: RecipeEditorInitial }) {
 
   const onSubmit = async (event: FormEvent) => {
     event.preventDefault();
-    if (!validateClient()) return;
+    if (mediaBusy || busy || !validateClient()) return;
     setBusy(true);
     setTopError(null);
     const payload = buildPayload();
@@ -381,7 +382,7 @@ export function RecipeEditor({ initial }: { initial: RecipeEditorInitial }) {
   };
 
   return (
-    <form onSubmit={onSubmit} className="flex flex-col gap-6">
+    <form onSubmit={onSubmit} className="recipe-editor flex min-w-0 flex-col gap-6">
       {!isEdit ? (
         <ImportPanel onImport={applyImport} />
       ) : null}
@@ -392,7 +393,7 @@ export function RecipeEditor({ initial }: { initial: RecipeEditorInitial }) {
         </div>
       ) : null}
 
-      <div className="card flex flex-col gap-6 p-6">
+      <div className="card flex flex-col gap-6 p-4 sm:p-6">
         {/* Basics */}
         <div className="flex flex-col gap-4">
           <h2 className="section-heading">Basics</h2>
@@ -587,7 +588,7 @@ export function RecipeEditor({ initial }: { initial: RecipeEditorInitial }) {
               >
                 <option value="inherit">Inherit site default</option>
                 <option value="public">Public</option>
-                <option value="members">Members (accounts with recipes.read)</option>
+                <option value="members">Members</option>
                 <option value="owner">Owner only</option>
               </select>
             </div>
@@ -659,7 +660,7 @@ export function RecipeEditor({ initial }: { initial: RecipeEditorInitial }) {
         </div>
       </div>
 
-      <fieldset className="card flex flex-col gap-3 p-6">
+      <fieldset className="card flex flex-col gap-3 p-4 sm:p-6">
         <legend className="px-1 font-display text-lg font-semibold">Ingredients</legend>
         {form.ingredients.map((row, index) => (
           <div
@@ -798,7 +799,7 @@ export function RecipeEditor({ initial }: { initial: RecipeEditorInitial }) {
         </button>
       </fieldset>
 
-      <fieldset className="card flex flex-col gap-3 p-6">
+      <fieldset className="card flex flex-col gap-3 p-4 sm:p-6">
         <legend className="px-1 font-display text-lg font-semibold">Steps</legend>
         {form.steps.map((step, index) => (
           <div
@@ -910,7 +911,7 @@ export function RecipeEditor({ initial }: { initial: RecipeEditorInitial }) {
         </button>
       </fieldset>
 
-      <div className="card flex flex-col gap-2 p-6">
+      <div className="card flex flex-col gap-2 p-4 sm:p-6">
         <label htmlFor="notes" className="label">
           Notes
         </label>
@@ -928,15 +929,15 @@ export function RecipeEditor({ initial }: { initial: RecipeEditorInitial }) {
         {renderFieldError("notesMarkdown")}
       </div>
 
-      {isEdit && initial.id ? <MediaManager recipeId={initial.id} media={form.media} /> : null}
-      {!isEdit ? <StagedMediaManager onItemsChange={setStagedMedia} onDirty={() => setDirty(true)} /> : null}
+      {isEdit && initial.id ? <MediaManager recipeId={initial.id} media={initial.media} onBusyChange={setMediaBusy} disabled={busy} /> : null}
+      {!isEdit ? <StagedMediaManager onBusyChange={setMediaBusy} disabled={busy} onItemsChange={setStagedMedia} onDirty={() => setDirty(true)} /> : null}
 
       <div className="form-action-bar flex flex-wrap items-center justify-between gap-3 rounded-t-xl">
-        <div className="flex gap-3">
-          <button type="submit" className="btn-primary" disabled={busy || !form.title.trim()}>
-            {busy ? "Saving…" : isEdit ? "Save changes" : "Create recipe"}
+        <div className="flex flex-wrap gap-3">
+          <button type="submit" className="btn-primary" disabled={busy || mediaBusy || !form.title.trim()}>
+            {mediaBusy ? "Adding photos…" : busy ? "Saving…" : isEdit ? "Save changes" : "Create recipe"}
           </button>
-          <button type="button" className="btn-secondary" onClick={onCancel}>
+          <button type="button" className="btn-secondary" disabled={busy || mediaBusy} onClick={onCancel}>
             Cancel
           </button>
         </div>
