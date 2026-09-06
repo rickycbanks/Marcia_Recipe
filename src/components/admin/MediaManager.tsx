@@ -1,7 +1,8 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useRef, useState } from "react";
+import { useState } from "react";
+import { PhotoPicker } from "./PhotoPicker";
 
 interface MediaItemData {
   id: string;
@@ -10,34 +11,26 @@ interface MediaItemData {
 }
 
 interface Props {
+  onBusyChange: (busy: boolean) => void;
+  disabled?: boolean;
   recipeId: string;
   media: MediaItemData[];
 }
 
-export function MediaManager({ recipeId, media }: Props) {
+export function MediaManager({ recipeId, media, onBusyChange, disabled }: Props) {
   const router = useRouter();
-  const fileRef = useRef<HTMLInputElement>(null);
-  const [alt, setAlt] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const upload = async () => {
-    const file = fileRef.current?.files?.[0];
-    if (!file) return;
-    setBusy(true);
-    setError(null);
+  const upload = async (file: File, alt: string) => {
     const form = new FormData();
     form.set("file", file);
     form.set("alt", alt);
     const response = await fetch(`/api/recipes/${recipeId}/media`, { method: "POST", body: form });
-    setBusy(false);
     if (!response.ok) {
       const body = (await response.json().catch(() => null)) as { error?: string } | null;
-      setError(body?.error ?? "Upload failed.");
-      return;
+      throw new Error(body?.error ?? "Upload failed. Please try again.");
     }
-    setAlt("");
-    if (fileRef.current) fileRef.current.value = "";
     router.refresh();
   };
 
@@ -45,17 +38,24 @@ export function MediaManager({ recipeId, media }: Props) {
     if (!window.confirm("Remove this image?")) return;
     setBusy(true);
     setError(null);
-    const response = await fetch(`/api/recipes/${recipeId}/media/${mediaId}`, { method: "DELETE" });
-    setBusy(false);
-    if (!response.ok) setError("Could not remove the image.");
-    router.refresh();
+    onBusyChange(true);
+    try {
+      const response = await fetch(`/api/recipes/${recipeId}/media/${mediaId}`, { method: "DELETE" });
+      if (!response.ok) throw new Error("Could not remove the image.");
+      router.refresh();
+    } catch {
+      setError("Could not remove the image. Please try again.");
+    } finally {
+      setBusy(false);
+      onBusyChange(false);
+    }
   };
 
   return (
-    <div id="photos" className="card flex scroll-mt-24 flex-col gap-3 p-4">
+    <div id="photos" className="card min-w-0 flex scroll-mt-24 flex-col gap-3 p-4">
       <h3 className="font-display text-lg font-semibold">Photos</h3>
       {media.length > 0 ? (
-        <ul className="grid grid-cols-3 gap-2 sm:grid-cols-4">
+        <ul className="grid grid-cols-2 gap-2 sm:grid-cols-4">
           {media.map((item) => (
             <li key={item.id} className="group relative">
               {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -71,8 +71,9 @@ export function MediaManager({ recipeId, media }: Props) {
               ) : null}
               <button
                 type="button"
-                className="absolute right-1 top-1 rounded bg-danger px-1.5 py-0.5 text-[10px] font-semibold text-danger-foreground opacity-0 transition-opacity group-hover:opacity-100"
+                className="absolute right-1 top-1 flex h-11 w-11 items-center justify-center rounded bg-danger text-lg font-semibold text-danger-foreground"
                 onClick={() => remove(item.id)}
+                disabled={busy || disabled}
                 aria-label={`Remove image ${item.alt}`}
               >
                 ×
@@ -83,21 +84,7 @@ export function MediaManager({ recipeId, media }: Props) {
       ) : (
         <p className="text-sm text-muted-foreground">No photos yet.</p>
       )}
-      <div className="flex flex-wrap items-center gap-2">
-        <input ref={fileRef} type="file" accept="image/jpeg,image/png,image/webp,image/avif,image/tiff" className="text-sm" aria-label="Image file" />
-        <input
-          className="input max-w-xs flex-1"
-          placeholder="Alt text"
-          value={alt}
-          onChange={(e) => setAlt(e.target.value)}
-          maxLength={200}
-          aria-label="Alt text"
-        />
-        <button type="button" className="btn-secondary" onClick={upload} disabled={busy}>
-          {busy ? "Working…" : "Upload"}
-        </button>
-      </div>
-      <p className="text-xs text-muted-foreground">JPEG/PNG/WebP/AVIF/TIFF, max 10 MB, resized to WebP.</p>
+      <PhotoPicker disabled={busy || disabled} onUpload={upload} onBusyChange={(value) => { setBusy(value); onBusyChange(value); }} />
       {error ? (
         <p role="alert" className="text-sm text-danger">
           {error}

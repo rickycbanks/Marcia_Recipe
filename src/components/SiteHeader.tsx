@@ -21,7 +21,7 @@ export function SiteHeader({ siteName, account }: { siteName: string; account: H
 
   return (
     <header className="border-b border-border bg-card">
-      <div className="mx-auto flex max-w-5xl items-center gap-3 px-4 py-3">
+      <div className="mx-auto flex flex-wrap max-w-5xl items-center gap-3 px-4 py-3">
         <button
           type="button"
           className="btn-secondary md:hidden"
@@ -32,10 +32,10 @@ export function SiteHeader({ siteName, account }: { siteName: string; account: H
         >
           <span aria-hidden>{menuOpen ? "×" : "☰"}</span>
         </button>
-        <Link href="/" className="font-display text-xl font-semibold text-foreground">
+        <Link href="/" className="min-w-0 flex-1 md:flex-none font-display text-xl font-semibold text-foreground">
           {siteName}
         </Link>
-        <nav aria-label="Primary" className="hidden items-center gap-x-4 gap-y-2 text-sm md:flex">
+        <nav aria-label="Primary" className="hidden flex-wrap items-center gap-x-4 gap-y-2 text-sm md:flex">
           <Link href="/recipes" className="text-muted-foreground hover:text-foreground">
             Recipes
           </Link>
@@ -55,14 +55,14 @@ export function SiteHeader({ siteName, account }: { siteName: string; account: H
             </Link>
           ) : null}
         </nav>
-        <div className="ml-auto flex items-center gap-3">
+        <div className="ml-auto flex shrink-0 items-center gap-2">
           <ThemeModeToggle />
           {account ? (
             <>
-              <Link href="/account" className="text-sm text-muted-foreground hover:text-foreground">
+              <Link href="/account" className="hidden md:block text-sm text-muted-foreground hover:text-foreground">
                 {account.displayName}
               </Link>
-              <SignOutButton />
+              <span className="hidden md:block"><SignOutButton /></span>
             </>
           ) : (
             <Link href="/login" className="btn-secondary text-sm">
@@ -95,6 +95,10 @@ export function SiteHeader({ siteName, account }: { siteName: string; account: H
             Admin
           </Link>
         ) : null}
+        {account ? <div className="flex flex-wrap items-center justify-between gap-3 border-t border-border pt-3">
+          <Link href="/account" className="min-w-0 rounded px-2 py-2" onClick={closeMenu}>{account.displayName}</Link>
+          <SignOutButton />
+        </div> : null}
       </nav>
     </header>
   );

@@ -398,7 +398,7 @@ Two supported modes, both producing a single writable instance:
   ProtectSystem=strict, ReadWritePaths scoped to `DATA_ROOT`)
 - `deploy/Caddyfile.example` is a minimal TLS reverse proxy
 
-See [`oracle_cloud.md`](oracle_cloud.md) for a full Oracle Cloud Always Free walkthrough.
+See [`ORACLE_CLOUD.md`](ORACLE_CLOUD.md) for a full Oracle Cloud Always Free walkthrough.
 
 ---
 
