@@ -155,6 +155,7 @@
   }
   body {
     @apply bg-background text-foreground font-body antialiased;
+    overflow-wrap: anywhere;
   }
   h1, h2, h3, h4 {
     @apply font-display;
@@ -179,7 +180,7 @@
     @apply inline-flex items-center justify-center gap-2 rounded-lg bg-danger px-4 py-2 text-sm font-medium text-danger-foreground transition-colors hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50;
   }
   .input {
-    @apply w-full rounded-lg border border-border bg-card px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground;
+    @apply min-w-0 max-w-full w-full rounded-lg border border-border bg-card px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground;
   }
   .label {
     @apply mb-1 block text-sm font-medium text-foreground;
@@ -199,4 +200,24 @@
   .drag-handle {
     @apply inline-flex cursor-grab items-center justify-center rounded-md px-1 py-2 text-muted-foreground hover:text-foreground active:cursor-grabbing;
   }
+}
+
+/* Let form controls shrink to the viewport instead of their intrinsic width. */
+@layer base {
+  fieldset { min-width: 0; }
+  input[type="file"] { max-width: 100%; min-width: 0; }
+}
+
+@media (max-width: 639px) {
+  .input { font-size: 1rem; }
+  .btn-primary, .btn-secondary, .btn-danger { min-height: 44px; }
+  .recipe-editor fieldset > div { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .recipe-editor fieldset .drag-handle { display: none; }
+  .recipe-editor fieldset input { width: 100%; min-width: 0; }
+  .recipe-editor fieldset input[aria-label$="name"],
+  .recipe-editor fieldset input[aria-label$="note"],
+  .recipe-editor fieldset textarea,
+  .recipe-editor fieldset > div > div,
+  .recipe-editor fieldset > div > p { grid-column: 1 / -1; }
+  .recipe-editor fieldset button[aria-label] { min-width: 44px; }
 }
