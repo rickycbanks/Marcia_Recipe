@@ -9,13 +9,25 @@ Server-side OCR (Mistral, Gemini) requires encryption keys stored in
 | Provider | Required fields | Notes |
 | --- | --- | --- |
 | **Tesseract** | _(none)_ | Browser-side only; always available, no API key needed. Runs locally in the user's browser. |
-| **Mistral** | API key | Server-side two-pass: `mistral-ocr-latest` for OCR, `ministral-3b-2512` for structured extraction. |
+| **Mistral** | API key | Server-side two-pass: `mistral-ocr-latest` for OCR, `mistral-small-latest` for structured extraction. |
 | **Gemini** | API key | Server-side two-pass: `gemini-3.5-flash-lite` for both OCR and structured extraction via the Google Generative Language API. |
 
 Users **cannot** choose or override the provider at import time — the admin-selected provider is
 used for all server-side OCR calls. Tesseract always runs in the browser; the cloud providers run
 server-side when configured. Legacy providers (Veryfi, Google Document AI) have been removed; their
 credentials are safely discarded on the next settings save.
+
+Mistral extraction uses cookbook layout rules to retain optional ingredients, measurement
+units, full instruction paragraphs, handwritten additions, and notes from all columns.
+Volume yields such as “Makes 2 cups” go in notes rather than becoming a serving count.
+The second pass uses Mistral Small for better extraction fidelity; its token pricing and
+latency differ from the previous Ministral 3B model. Provider failures still use the
+existing heuristic fallback, so review the returned draft before saving.
+
+Upload photos with the text upright. A sideways photo may be marked upright in EXIF,
+so automatic metadata rotation cannot reliably repair it. In the cookbook evaluation,
+rotating one photo corrected an OCR fraction from ½ to ⅓. Extraction cannot reliably
+repair incorrect source text. See [OCR evaluation](OCR-EVALUATION.md) for reproduction.
 
 Generate and configure the encryption key automatically:
 
