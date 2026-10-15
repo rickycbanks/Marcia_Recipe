@@ -96,12 +96,16 @@ function normalizeMarkdownTitle(line: string): string {
 }
 
 /**
- * Convert LaTeX-escaped fractions ("\\(1 / 4\\)") to plain "1/4" so the
- * ingredient parser can read them as quantities. Mistral OCR emits fractions
- * this way; other text passes through unchanged.
+ * Convert OCR slash fractions and LaTeX frac/dfrac expressions to plain
+ * fractions, preserving whole numbers in mixed fractions and line breaks.
+ * Unrelated math passes through unchanged.
  */
 export function normalizeLatexFractions(text: string): string {
-  return text.replace(/\\\(\s*(\d+)\s*\/\s*(\d+)\s*\\\)/g, "$1/$2");
+  return text
+    .replace(/\\(?:d?frac)\s*\{\s*(\d+)\s*\}\s*\{\s*(\d+)\s*\}/g, "$1/$2")
+    .replace(/\\\(\s*((?:\d+\s+)?\d+\s*\/\s*\d+)\s*\\\)/g, (_match, fraction: string) =>
+      fraction.replace(/\s*\/\s*/g, "/").replace(/\s+/g, " ").trim(),
+    );
 }
 
 /**

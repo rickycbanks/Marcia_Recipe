@@ -127,7 +127,7 @@ export function OcrSettingsForm({ initial }: { initial: SanitizedConfig }) {
           <p className="text-sm font-medium">Mistral credentials</p>
           <p className="help-text">
             Uses <code className="rounded bg-muted px-1">mistral-ocr-latest</code> for OCR and
-            <code className="rounded bg-muted px-1">ministral-3b-2512</code> for structured extraction.
+            <code className="rounded bg-muted px-1">mistral-small-latest</code> for structured extraction.
           </p>
           <div>
             <label htmlFor="mistral-api-key" className="label">

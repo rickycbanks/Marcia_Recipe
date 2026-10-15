@@ -16,6 +16,7 @@ import { tmpdir } from "node:os";
 import { randomBytes } from "node:crypto";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { resetEnvCache } from "@/lib/env";
+import { logger } from "@/lib/logger";
 import { ensureDataRoot } from "@/lib/storage/dataRoot";
 import {
   resetKeyringCache,
@@ -470,7 +471,7 @@ describe("extraction prompt", () => {
     expect(EXTRACTION_USER_PROMPT_PREFIX).toContain("quantity, unit, name");
     expect(EXTRACTION_USER_PROMPT_PREFIX).toContain('note field is only for qualifiers');
     // Notes/tips
-    expect(EXTRACTION_USER_PROMPT_PREFIX).toContain("notes, tips, or variations");
+    expect(EXTRACTION_USER_PROMPT_PREFIX).toContain("copy recipe notes, tips, serving suggestions, storage, and variations verbatim");
     // Exclusion rules
     expect(EXTRACTION_USER_PROMPT_PREFIX).toContain("Exclude page furniture");
     expect(EXTRACTION_USER_PROMPT_PREFIX).toContain("logos");
@@ -517,7 +518,7 @@ describe("recognizeAndExtractWithMistral (no-network)", () => {
     });
 
     const pass1Response = {
-      pages: [{ index: 0, markdown: "# Banana Pancakes\n## Ingredients\n- 2 cups flour\n## Instructions\n1. Mix." }],
+      pages: [{ index: 0, markdown: "# Banana Pancakes\n## Ingredients\n- \\( \\frac{1}{2} \\) cup flour\n## Instructions\n1. Mix." }],
     };
     const pass2Response = {
       choices: [{
@@ -544,10 +545,15 @@ describe("recognizeAndExtractWithMistral (no-network)", () => {
       const body = init?.body ? JSON.parse(String(init.body)) : null;
 
       if (urlStr.includes("/v1/ocr")) {
+        expect(body.model).toBe("mistral-ocr-latest");
+        expect(body.document?.type).toBe("image_url");
+        expect(body.document?.image_url).toBe(
+          `data:image/png;base64,${Buffer.from("fake-image").toString("base64")}`,
+        );
         return new Response(JSON.stringify(pass1Response), { status: 200 });
       }
       if (urlStr.includes("/v1/chat/completions")) {
-        expect(body.model).toBe("ministral-3b-2512");
+        expect(body.model).toBe("mistral-small-latest");
         expect(body.response_format?.type).toBe("json_schema");
         expect(body.response_format?.json_schema?.name).toBe("recipe_extraction");
         // Official Mistral field name is `schema`, NOT `schema_object`
@@ -560,6 +566,8 @@ describe("recognizeAndExtractWithMistral (no-network)", () => {
         expect(body.messages[0].content).toContain("JSON object");
         // Pass-1 text should be in user message
         expect(body.messages[1].content).toContain("Banana Pancakes");
+        expect(body.messages[1].content).toContain("- 1/2 cup flour");
+        expect(body.messages[1].content).not.toContain("\\frac");
         return new Response(JSON.stringify(pass2Response), { status: 200 });
       }
       return new Response("Not found", { status: 404 });
@@ -716,6 +724,13 @@ describe("recognizeAndExtractWithMistral (no-network)", () => {
       return new Response("Not found", { status: 404 });
     });
 
+    const spies = [
+      vi.spyOn(logger, "debug"),
+      vi.spyOn(logger, "info"),
+      vi.spyOn(logger, "warn"),
+      vi.spyOn(logger, "error"),
+    ];
+
     await recognizeAndExtractWithMistral(
       Buffer.from("fake-image"),
       "image/png",
@@ -733,9 +748,15 @@ describe("recognizeAndExtractWithMistral (no-network)", () => {
         }
       }
     }
-    // The key should not appear in any logger output — verified by the fact
-    // that we only call logger.info/warn with structured metadata, never with
-    // the full request/response body.
+    // The key and raw provider response bodies must not appear in any log line.
+    const logged = spies
+      .flatMap((spy) => spy.mock.calls)
+      .map((args) => JSON.stringify(args))
+      .join("\n");
+    expect(logged).not.toContain("super-secret-mistral-key-xyz");
+    expect(logged).not.toContain("# Test");
+    expect(logged).not.toContain('"title":"Test"');
+    vi.restoreAllMocks();
   });
 });
 

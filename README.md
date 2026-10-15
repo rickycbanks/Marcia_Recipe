@@ -61,6 +61,23 @@ openssl rand -base64 48   # AUTH_SECRET
 openssl rand -hex 16      # SETUP_TOKEN
 ```
 
+### Portable environment (distrobox)
+
+Prefer a disposable, reproducible toolchain that doesn't touch your host? The repo ships a
+distrobox-based dev environment (Fedora + Node.js 22) defined entirely in
+[`dev/distrobox.ini`](dev/distrobox.ini):
+
+```sh
+distrobox-assemble create --file dev/distrobox.ini   # one-time: build the container
+distrobox enter marcia-dev                           # open a shell in it
+cd ~/Projects/Marcia_Recipe && npm ci && cp .env.example .env
+npm run dev                                          # http://localhost:3000
+```
+
+Your code, `node_modules`, `.env`, and `data/` stay in your home directory (mounted into the
+container), so the container is fully disposable. See [`docs/DEV-ENV.md`](docs/DEV-ENV.md) for
+the full guide.
+
 ---
 
 ## Documentation
@@ -68,6 +85,7 @@ openssl rand -hex 16      # SETUP_TOKEN
 | Document | Contents |
 | --- | --- |
 | [`docs/DEPLOYMENT.md`](docs/DEPLOYMENT.md) | Docker and direct Node.js deployment, environment variables, building from source |
+| [`docs/DEV-ENV.md`](docs/DEV-ENV.md) | Portable distrobox dev environment (Fedora + Node.js 22) |
 | [`docs/ORACLE_CLOUD.md`](docs/ORACLE_CLOUD.md) | Step-by-step Oracle Cloud Always Free deployment |
 | [`docs/USAGE.md`](docs/USAGE.md) | First run, adding recipes, inviting guests, meal planning, backups |
 | [`docs/OCR-SETUP.md`](docs/OCR-SETUP.md) | Cloud OCR providers (Tesseract, Mistral, Gemini) and keyring setup |
