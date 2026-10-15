@@ -284,7 +284,7 @@ stored in encrypted form at `config/ocr.private.json`. The selection flow:
 | Provider | Execution | Pipeline |
 | --- | --- | --- |
 | **Tesseract** | Browser-side (Tesseract.js) | Single-pass: image → text (no API key, no server round-trip). Always available. |
-| **Mistral** | Server-side two-pass | Pass 1: `mistral-ocr-latest` OCR endpoint → markdown. Pass 2: `ministral-3b-2512` Chat Completions with strict JSON Schema → structured recipe JSON. |
+| **Mistral** | Server-side two-pass | Pass 1: `mistral-ocr-latest` OCR endpoint → markdown. Pass 2: `mistral-small-latest` Chat Completions with strict JSON Schema → structured recipe JSON. |
 | **Gemini** | Server-side two-pass | Pass 1: `gemini-3.5-flash-lite` vision/text → transcription markdown. Pass 2: same model → structured recipe JSON via the Google Generative Language REST API. |
 
 Cloud providers perform two sequential passes: first OCR the image to text, then extract structured

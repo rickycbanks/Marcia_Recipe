@@ -2,7 +2,7 @@
  * Mistral OCR + structured extraction provider.
  *
  * Pass 1: POST https://api.mistral.ai/v1/ocr — fixed mistral-ocr-latest model → OCR markdown.
- * Pass 2: POST https://api.mistral.ai/v1/chat/completions — fixed ministral-3b-2512 model,
+ * Pass 2: POST https://api.mistral.ai/v1/chat/completions — fixed mistral-small-latest model,
  *          strict json_schema response format → structured recipe JSON.
  *
  * The API key is loaded from the encrypted private config, falling back to
@@ -20,12 +20,12 @@ import {
   mistralExtractionSchema,
   type ExtractionResult,
 } from "./structuredRecipe";
-import { parseRecipeText } from "@/lib/imports/ocr";
+import { normalizeLatexFractions, parseRecipeText } from "@/lib/imports/ocr";
 
 const MISTRAL_OCR_URL = "https://api.mistral.ai/v1/ocr";
 const MISTRAL_CHAT_URL = "https://api.mistral.ai/v1/chat/completions";
 const MISTRAL_OCR_MODEL = "mistral-ocr-latest";
-const MISTRAL_CHAT_MODEL = "ministral-3b-2512";
+const MISTRAL_CHAT_MODEL = "mistral-small-latest";
 
 export interface MistralResponseLike {
   ok: boolean;
@@ -55,7 +55,7 @@ async function passOne(
       },
       body: JSON.stringify({
         model: MISTRAL_OCR_MODEL,
-        document: { image_url: dataUri },
+        document: { type: "image_url", image_url: dataUri },
       }),
       signal: AbortSignal.timeout(OCR_LIMITS.passTimeoutMs),
     }) as unknown as MistralResponseLike;
@@ -87,7 +87,7 @@ async function passTwo(
   apiKey: string,
   fetchImpl: typeof fetch,
 ): Promise<string> {
-  const userContent = `${EXTRACTION_USER_PROMPT_PREFIX}${ocrText}`;
+  const userContent = `${EXTRACTION_USER_PROMPT_PREFIX}${normalizeLatexFractions(ocrText)}`;
 
   let response: MistralResponseLike;
   try {

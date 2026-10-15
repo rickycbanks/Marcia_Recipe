@@ -5,6 +5,9 @@
 Marcia Recipe supports two deployment modes. **For a full step-by-step guide to deploying on
 Oracle Cloud's Always Free tier, see [`ORACLE_CLOUD.md`](ORACLE_CLOUD.md).**
 
+> **Just developing locally?** For a disposable, reproducible dev environment (Fedora +
+> Node.js 22 via [distrobox](https://github.com/89luca89/distrobox)), see [`DEV-ENV.md`](DEV-ENV.md).
+
 ## Before you deploy
 
 - **Node.js 22 LTS** or newer (required by Next.js 16, Sharp, Undici, and the test toolchain)

@@ -62,3 +62,6 @@ fixkey
 /home/ricky/.oci/
 oci_recovery.md
 oci_operations.md
+
+# Local OCR evaluation fixtures
+/recipeocrimprovement/
