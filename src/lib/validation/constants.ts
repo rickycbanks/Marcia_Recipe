@@ -76,6 +76,10 @@ export const OCR_LIMITS = {
   /** Maximum text bytes sent to pass-2 structured extraction. */
   maxOcrTextBytes: 100_000,
   allowedMimeTypes: ["image/png", "image/jpeg", "image/avif"] as const,
+  /** Maximum images in one multi-page OCR request (recipe books span a few pages). */
+  maxPages: 6,
+  /** Maximum combined image bytes in one multi-page OCR request. */
+  maxTotalImageBytes: 30 * 1024 * 1024,
 } as const;
 
 /** Login throttling: maxAttempts per window, keyed by normalized username + client address. */

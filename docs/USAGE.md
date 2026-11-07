@@ -18,7 +18,7 @@
 
 - **Manual**: `/admin/recipes/new` — fill in title, ingredients, steps, notes, media, visibility
 - **URL import**: `/admin` → Import panel → paste a recipe URL → review the draft → save
-- **OCR import**: `/admin` → Import panel → upload an image → review the extracted draft → save
+- **OCR import**: `/admin` → Import panel → select one or more recipe pages (multi-page recipes are recognized in page order) → arrange and remove pages → Recognize → review the extracted draft → save
 - Imports and OCR **never** save directly — you always review a draft first
 
 ## Inviting guests
