@@ -3,11 +3,13 @@ import { apiHandler, jsonOk, parseBody } from "@/lib/api";
 import { requireCapability } from "@/lib/authorization/guards";
 import { getEffectiveOcrProvider } from "@/lib/config/ocrPrivate";
 import { parseOcrText } from "@/lib/imports/service";
+import { OCR_LIMITS } from "@/lib/validation/constants";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-const bodySchema = z.object({ text: z.string().min(1).max(50_000) });
+/** Client Tesseract may send several recognized pages as one combined text. */
+const bodySchema = z.object({ text: z.string().min(1).max(OCR_LIMITS.maxOcrTextBytes) });
 
 /**
  * Owner-only OCR text parsing. The image never leaves the browser (Tesseract.js

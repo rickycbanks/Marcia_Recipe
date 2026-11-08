@@ -15,12 +15,14 @@ import {
   getEffectiveOcrProvider,
   type OcrProvider,
 } from "@/lib/config/ocrPrivate";
-import { recognizeAndExtractWithMistral } from "./mistral";
-import { recognizeAndExtractWithGemini } from "./gemini";
+import { recognizeAndExtractWithMistralPages } from "./mistral";
+import { recognizeAndExtractWithGeminiPages } from "./gemini";
+import { validateOcrPageImages, type OcrPageImage } from "./pageImage";
 import { OCR_LIMITS } from "@/lib/validation/constants";
 import type { ExtractionResult } from "./structuredRecipe";
 
 export type { OcrProvider };
+export type { OcrPageImage };
 
 export interface RecognizeOptions {
   /** Override the fetch implementation (for tests). */
@@ -28,15 +30,16 @@ export interface RecognizeOptions {
 }
 
 /**
- * Dispatch an image to the site-wide active OCR provider and return a
- * structured recipe draft via the two-pass pipeline.
+ * Dispatch one or more page images to the site-wide active OCR provider and
+ * return a structured recipe draft via the two-pass pipeline. Pass 1 runs
+ * per page in the given order; the concatenated page text is parsed once by
+ * pass 2, so multi-page recipes arrive as a single draft.
  *
  * Tesseract runs client-side and never reaches this path.
  * Throws AppError-based errors so route handlers can map them safely.
  */
-export async function recognizeAndExtractRecipe(
-  imageBuffer: Buffer,
-  mimeType: string,
+export async function recognizeAndExtractRecipePages(
+  images: readonly OcrPageImage[],
   options: RecognizeOptions = {},
 ): Promise<ExtractionResult> {
   const provider = await getEffectiveOcrProvider();
@@ -47,6 +50,27 @@ export async function recognizeAndExtractRecipe(
     );
   }
 
+  validateOcrPageImages(images);
+
+  switch (provider) {
+    case "mistral":
+      return recognizeAndExtractWithMistralPages(images, options.fetchImpl);
+    case "gemini":
+      return recognizeAndExtractWithGeminiPages(images, options.fetchImpl);
+    default:
+      throw badRequest(`Unsupported OCR provider: ${provider}`);
+  }
+}
+
+/**
+ * Dispatch a single image to the active OCR provider.
+ * Single-page convenience wrapper around recognizeAndExtractRecipePages.
+ */
+export async function recognizeAndExtractRecipe(
+  imageBuffer: Buffer,
+  mimeType: string,
+  options: RecognizeOptions = {},
+): Promise<ExtractionResult> {
   const allowed = OCR_LIMITS.allowedMimeTypes as readonly string[];
   if (!allowed.includes(mimeType)) {
     throw badRequest(`Unsupported image type: ${mimeType}`);
@@ -54,15 +78,7 @@ export async function recognizeAndExtractRecipe(
   if (imageBuffer.byteLength > OCR_LIMITS.maxImageBytes) {
     throw badRequest("Image exceeds the OCR size limit");
   }
-
-  switch (provider) {
-    case "mistral":
-      return recognizeAndExtractWithMistral(imageBuffer, mimeType, options.fetchImpl);
-    case "gemini":
-      return recognizeAndExtractWithGemini(imageBuffer, mimeType, options.fetchImpl);
-    default:
-      throw badRequest(`Unsupported OCR provider: ${provider}`);
-  }
+  return recognizeAndExtractRecipePages([{ buffer: imageBuffer, mimeType }], options);
 }
 
 /**

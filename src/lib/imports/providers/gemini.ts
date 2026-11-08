@@ -19,6 +19,7 @@ import {
   type ExtractionResult,
 } from "./structuredRecipe";
 import { parseRecipeText } from "@/lib/imports/ocr";
+import { validateOcrPageImages, type OcrPageImage } from "./pageImage";
 
 const GEMINI_MODEL = "gemini-3.5-flash-lite";
 const GEMINI_BASE_URL = "https://generativelanguage.googleapis.com/v1beta";
@@ -162,6 +163,42 @@ async function passTwo(
   return text.trim();
 }
 
+/* ----------------------- shared pass 2 + fallback ------------------------- */
+
+/**
+ * Pass 2 on OCR text: structured JSON via the chat model, with the heuristic
+ * parser as fallback when pass 2 or its validation fails.
+ */
+async function extractFromOcrText(
+  ocrText: string,
+  apiKey: string,
+  fetchImpl: typeof fetch,
+): Promise<ExtractionResult> {
+  // Pass 2: OCR text → structured recipe JSON
+  let rawJson: string;
+  try {
+    rawJson = await passTwo(ocrText, apiKey, fetchImpl);
+    logger.info("Gemini pass-2 extraction completed");
+  } catch {
+    // Pass 2 failure: fall back to the heuristic parser on pass-1 text
+    logger.warn("Gemini pass-2 failed; using heuristic fallback");
+    const draft = parseRecipeText(ocrText);
+    return { draft, status: "heuristic-fallback" };
+  }
+
+  // Parse and validate the structured JSON
+  const { tryStructuredExtraction } = await import("./structuredRecipe");
+  const draft = tryStructuredExtraction(rawJson);
+  if (draft) {
+    return { draft, status: "ai-normalized" };
+  }
+
+  // Validation failed: fall back to the heuristic parser
+  logger.warn("Gemini structured extraction validation failed; using heuristic fallback");
+  const fallbackDraft = parseRecipeText(ocrText);
+  return { draft: fallbackDraft, status: "heuristic-fallback" };
+}
+
 /* -------------------------------- exported -------------------------------- */
 
 /**
@@ -185,27 +222,40 @@ export async function recognizeAndExtractWithGemini(
   const ocrText = await passOne(imageBuffer, mimeType, secrets.apiKey, fetchImpl);
   logger.info("Gemini pass-1 OCR completed", { bytes: imageBuffer.byteLength });
 
-  // Pass 2: OCR text → structured recipe JSON
-  let rawJson: string;
-  try {
-    rawJson = await passTwo(ocrText, secrets.apiKey, fetchImpl);
-    logger.info("Gemini pass-2 extraction completed");
-  } catch {
-    // Pass 2 failure: fall back to the heuristic parser on pass-1 text
-    logger.warn("Gemini pass-2 failed; using heuristic fallback");
-    const draft = parseRecipeText(ocrText);
-    return { draft, status: "heuristic-fallback" };
+  return extractFromOcrText(ocrText, secrets.apiKey, fetchImpl);
+}
+
+/**
+ * Multi-page two-pass Gemini pipeline. Pass 1 runs once per page, in the
+ * given order; the page texts are concatenated and parsed together by a
+ * single pass-2 call, so a recipe spanning several book pages arrives as
+ * one draft. A page that fails OCR aborts the request naming the page
+ * number. Never exposes provider response bodies in errors.
+ */
+export async function recognizeAndExtractWithGeminiPages(
+  images: readonly OcrPageImage[],
+  fetchImpl: typeof fetch = globalThis.fetch,
+): Promise<ExtractionResult> {
+  const secrets = await getGeminiSecrets();
+  if (!secrets) {
+    throw badRequest(
+      "Gemini OCR is not configured. Ask the site owner to add a Gemini API key in Admin Settings.",
+    );
+  }
+  validateOcrPageImages(images);
+
+  const pageTexts: string[] = [];
+  for (const [index, image] of images.entries()) {
+    try {
+      pageTexts.push(await passOne(image.buffer, image.mimeType, secrets.apiKey, fetchImpl));
+    } catch (err) {
+      throw upstreamFetch(`Gemini OCR failed on page ${index + 1}`, {
+        cause: err instanceof Error ? err.message : String(err),
+      });
+    }
+    logger.info("Gemini pass-1 OCR completed", { page: index + 1, bytes: image.buffer.byteLength });
   }
 
-  // Parse and validate the structured JSON
-  const { tryStructuredExtraction } = await import("./structuredRecipe");
-  const draft = tryStructuredExtraction(rawJson);
-  if (draft) {
-    return { draft, status: "ai-normalized" };
-  }
-
-  // Validation failed: fall back to the heuristic parser
-  logger.warn("Gemini structured extraction validation failed; using heuristic fallback");
-  const fallbackDraft = parseRecipeText(ocrText);
-  return { draft: fallbackDraft, status: "heuristic-fallback" };
+  const ocrText = pageTexts.join("\n\n");
+  return extractFromOcrText(ocrText, secrets.apiKey, fetchImpl);
 }
