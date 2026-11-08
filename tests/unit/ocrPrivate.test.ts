@@ -411,6 +411,103 @@ describe("getMistralSecrets", () => {
   });
 });
 
+describe("Mistral extraction model", () => {
+  it("defaults to mistral-small-latest with env fallback and no saved model", async () => {
+    root = await mkdtemp(join(tmpdir(), "ocr-model-default-"));
+    process.env.DATA_ROOT = root;
+    process.env.MISTRAL_API_KEY = "env-key-1234567890";
+    resetEnvCache();
+    await ensureDataRoot();
+    const secrets = await getMistralSecrets();
+    expect(secrets?.extractionModel).toBe("mistral-small-latest");
+  });
+
+  it("saves and resolves a selected extraction model", async () => {
+    root = await mkdtemp(join(tmpdir(), "ocr-model-save-"));
+    process.env.DATA_ROOT = root;
+    process.env.PRIVATE_CONFIG_KEYRING = makeKeyringEnv();
+    resetEnvCache();
+    resetKeyringCache();
+    await ensureDataRoot();
+    await savePrivateOcrConfig({
+      activeProvider: "mistral",
+      mistral: { apiKey: "test-mistral-key-12345", extractionModel: "mistral-large-4" },
+    });
+    const secrets = await getMistralSecrets();
+    expect(secrets?.extractionModel).toBe("mistral-large-4");
+    expect(secrets?.apiKey).toBe("test-mistral-key-12345");
+    const sanitized = await getSanitizedOcrConfig();
+    expect(sanitized.mistralExtractionModel).toBe("mistral-large-4");
+  });
+
+  it("retains the API key when switching only the extraction model", async () => {
+    root = await mkdtemp(join(tmpdir(), "ocr-model-switch-"));
+    process.env.DATA_ROOT = root;
+    process.env.PRIVATE_CONFIG_KEYRING = makeKeyringEnv();
+    resetEnvCache();
+    resetKeyringCache();
+    await ensureDataRoot();
+    await savePrivateOcrConfig({
+      activeProvider: "mistral",
+      mistral: { apiKey: "kept-key-123456789", extractionModel: "mistral-small-latest" },
+    });
+    await savePrivateOcrConfig({
+      mistral: { extractionModel: "zai-glm-5-3-flash" },
+    });
+    const secrets = await getMistralSecrets();
+    expect(secrets?.apiKey).toBe("kept-key-123456789");
+    expect(secrets?.extractionModel).toBe("zai-glm-5-3-flash");
+  });
+
+  it("resolves an unknown stored model to the default", async () => {
+    root = await mkdtemp(join(tmpdir(), "ocr-model-unknown-"));
+    process.env.DATA_ROOT = root;
+    process.env.PRIVATE_CONFIG_KEYRING = makeKeyringEnv();
+    resetEnvCache();
+    resetKeyringCache();
+    await ensureDataRoot();
+
+    const { writeFile } = await import("node:fs/promises");
+    const { join: pathJoin } = await import("node:path");
+    const envelope = encrypt(
+      JSON.stringify({
+        activeProvider: "mistral",
+        mistral: { apiKey: "stored-key-12345678", extractionModel: "some-retired-model" },
+      }),
+    );
+    await writeFile(pathJoin(root, "config", "ocr.private.json"), envelope, "utf8");
+
+    const secrets = await getMistralSecrets();
+    expect(secrets?.extractionModel).toBe("mistral-small-latest");
+    expect(secrets?.apiKey).toBe("stored-key-12345678");
+  });
+
+  it("reads a legacy config without an extraction model", async () => {
+    root = await mkdtemp(join(tmpdir(), "ocr-model-legacy-"));
+    process.env.DATA_ROOT = root;
+    process.env.PRIVATE_CONFIG_KEYRING = makeKeyringEnv();
+    resetEnvCache();
+    resetKeyringCache();
+    await ensureDataRoot();
+
+    const { writeFile } = await import("node:fs/promises");
+    const { join: pathJoin } = await import("node:path");
+    const envelope = encrypt(
+      JSON.stringify({
+        activeProvider: "mistral",
+        mistral: { apiKey: "legacy-key-12345678" },
+      }),
+    );
+    await writeFile(pathJoin(root, "config", "ocr.private.json"), envelope, "utf8");
+
+    const secrets = await getMistralSecrets();
+    expect(secrets?.apiKey).toBe("legacy-key-12345678");
+    expect(secrets?.extractionModel).toBe("mistral-small-latest");
+    const sanitized = await getSanitizedOcrConfig();
+    expect(sanitized.mistralExtractionModel).toBe("mistral-small-latest");
+  });
+});
+
 describe("getGeminiSecrets", () => {
   it("returns null when no config", async () => {
     root = await mkdtemp(join(tmpdir(), "ocr-gemini-secrets-"));
