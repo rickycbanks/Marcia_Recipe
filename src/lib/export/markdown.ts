@@ -11,6 +11,7 @@
  */
 import type { MealPlan, Recipe, ShoppingList } from "@/types";
 import { formatQuantity } from "@/lib/fractions";
+import { formatMinutesDuration } from "@/lib/duration";
 
 /* --------------------------------- recipe --------------------------------- */
 
@@ -30,7 +31,7 @@ function difficultyLabel(d: "easy" | "medium" | "hard"): string {
 }
 
 function formatMinutes(m: number | null): string {
-  return m === null ? "" : `${m} min`;
+  return m === null ? "" : formatMinutesDuration(m);
 }
 
 /**
@@ -48,7 +49,7 @@ export function recipeToMarkdown(recipe: Recipe): string {
   const meta: string[] = [];
   const prep = formatMinutes(recipe.prepMinutes);
   const cook = formatMinutes(recipe.cookMinutes);
-  if (prep && cook) meta.push(`**Prep:** ${prep}`, `**Cook:** ${cook}`, `**Total:** ${(recipe.prepMinutes ?? 0) + (recipe.cookMinutes ?? 0)} min`);
+  if (prep && cook) meta.push(`**Prep:** ${prep}`, `**Cook:** ${cook}`, `**Total:** ${formatMinutesDuration((recipe.prepMinutes ?? 0) + (recipe.cookMinutes ?? 0))}`);
   else if (prep) meta.push(`**Prep:** ${prep}`);
   else if (cook) meta.push(`**Cook:** ${cook}`);
   if (recipe.servings !== null) meta.push(`**Servings:** ${formatQuantity(recipe.servings)}`);

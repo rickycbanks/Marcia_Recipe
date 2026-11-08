@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 import { RecipeEditor } from "@/components/admin/RecipeEditor";
 import { getRecipeForOwner } from "@/lib/recipes/service";
 import { formatQuantity } from "@/lib/fractions";
+import { splitToHoursMinutes } from "@/lib/duration";
 
 export const dynamic = "force-dynamic";
 export const metadata = { title: "Edit recipe" };
@@ -25,8 +26,10 @@ export default async function EditRecipePage({ params }: Props) {
           title: recipe.title,
           description: recipe.description,
           visibility: recipe.visibility,
-          prepMinutes: recipe.prepMinutes !== null ? String(recipe.prepMinutes) : "",
-          cookMinutes: recipe.cookMinutes !== null ? String(recipe.cookMinutes) : "",
+          prepHours: splitToHoursMinutes(recipe.prepMinutes).hours,
+          prepMinutes: splitToHoursMinutes(recipe.prepMinutes).minutes,
+          cookHours: splitToHoursMinutes(recipe.cookMinutes).hours,
+          cookMinutes: splitToHoursMinutes(recipe.cookMinutes).minutes,
           servings: recipe.servings !== null ? String(recipe.servings) : "",
           difficulty: recipe.difficulty ?? "",
           category: recipe.category ?? "",

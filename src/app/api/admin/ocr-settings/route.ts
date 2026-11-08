@@ -2,7 +2,11 @@ import { z } from "zod";
 import { apiHandler, jsonOk, parseBody } from "@/lib/api";
 import { audit } from "@/lib/audit/log";
 import { requireOwner } from "@/lib/authorization/guards";
-import { getSanitizedOcrConfig, savePrivateOcrConfig } from "@/lib/config/ocrPrivate";
+import {
+  MISTRAL_EXTRACTION_MODELS,
+  getSanitizedOcrConfig,
+  savePrivateOcrConfig,
+} from "@/lib/config/ocrPrivate";
 import { withWriteLock } from "@/lib/storage/lock";
 
 export const runtime = "nodejs";
@@ -15,6 +19,7 @@ const patchSchema = z.object({
   mistral: z
     .object({
       apiKey: z.string().optional(),
+      extractionModel: z.enum(MISTRAL_EXTRACTION_MODELS).optional(),
     })
     .optional()
     .nullable(),
