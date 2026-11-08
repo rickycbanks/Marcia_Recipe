@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { parseQuantityInput, formatQuantity } from "@/lib/fractions";
+import { parseQuantityInput, formatQuantity, scaleQuantity } from "@/lib/fractions";
 import { aggregateIngredients, formatAggregatedItem } from "@/lib/shopping-lists/aggregate";
 import type { Ingredient } from "@/types";
 
@@ -222,5 +222,42 @@ describe("shopping aggregation with fractions", () => {
     expect(result).toHaveLength(1);
     expect(result[0]!.quantity).toBe(3);
     expect(formatAggregatedItem(result[0]!)).toBe("3 cup Flour");
+  });
+});
+
+// ── scaleQuantity (batch scaling on the recipe detail page) ──────────────────
+
+describe("scaleQuantity", () => {
+  it("halves quantities for a half batch", () => {
+    expect(scaleQuantity(1, 0.5)).toBe(0.5);
+    expect(scaleQuantity(3, 0.5)).toBe(1.5);
+    expect(scaleQuantity(0.5, 0.5)).toBe(0.25);
+  });
+
+  it("multiplies quantities for double, triple, and quadruple batches", () => {
+    expect(scaleQuantity(1.5, 2)).toBe(3);
+    expect(scaleQuantity(0.25, 3)).toBe(0.75);
+    expect(scaleQuantity(0.5, 4)).toBe(2);
+  });
+
+  it("snaps IEEE-754 residue to 3 decimals", () => {
+    expect(scaleQuantity(0.1, 3)).toBe(0.3);
+    expect(scaleQuantity(0.7, 4)).toBe(2.8);
+  });
+
+  it("rounds to 3 decimal places", () => {
+    expect(scaleQuantity(1, 0.5)).toBe(0.5);
+    expect(scaleQuantity(0.333, 0.5)).toBe(0.167);
+  });
+
+  it("returns the input unchanged for non-finite values", () => {
+    expect(scaleQuantity(Number.NaN, 2)).toBeNaN();
+    expect(scaleQuantity(1, Number.NaN)).toBe(1);
+  });
+
+  it("produces fraction-friendly values through formatQuantity", () => {
+    expect(formatQuantity(scaleQuantity(0.5, 0.5))).toBe("1/4");
+    expect(formatQuantity(scaleQuantity(1.5, 3))).toBe("4 1/2");
+    expect(formatQuantity(scaleQuantity(0.7, 2))).toBe("1 2/5");
   });
 });
