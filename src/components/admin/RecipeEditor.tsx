@@ -5,6 +5,7 @@ import { useEffect, useMemo, useRef, useState, type FormEvent, type KeyboardEven
 import { recipeDraftSchema } from "@/lib/validation/schemas";
 import { MAX_TAGS } from "@/lib/validation/constants";
 import { parseQuantityInput, formatQuantity } from "@/lib/fractions";
+import { combineHoursMinutes, formatMinutesDuration, splitToHoursMinutes } from "@/lib/duration";
 import { AutocompleteInput } from "@/components/AutocompleteInput";
 import { TagInput } from "@/components/TagInput";
 import { ImportPanel, type ImportedDraft } from "./ImportPanel";
@@ -24,7 +25,9 @@ export interface RecipeEditorInitial {
   title: string;
   description: string;
   visibility: "inherit" | "public" | "members" | "owner";
+  prepHours: string;
   prepMinutes: string;
+  cookHours: string;
   cookMinutes: string;
   servings: string;
   difficulty: "" | "easy" | "medium" | "hard";
@@ -44,7 +47,9 @@ export const EMPTY_RECIPE: RecipeEditorInitial = {
   title: "",
   description: "",
   visibility: "inherit",
+  prepHours: "",
   prepMinutes: "",
+  cookHours: "",
   cookMinutes: "",
   servings: "",
   difficulty: "",
@@ -144,11 +149,11 @@ export function RecipeEditor({ initial }: { initial: RecipeEditorInitial }) {
   };
 
   const totalMinutes = useMemo(() => {
-    const prep = parseOptionalNumber(form.prepMinutes);
-    const cook = parseOptionalNumber(form.cookMinutes);
+    const prep = combineHoursMinutes(form.prepHours, form.prepMinutes);
+    const cook = combineHoursMinutes(form.cookHours, form.cookMinutes);
     if (prep === null && cook === null) return null;
     return (prep ?? 0) + (cook ?? 0);
-  }, [form.prepMinutes, form.cookMinutes]);
+  }, [form.prepHours, form.prepMinutes, form.cookHours, form.cookMinutes]);
 
   const addIngredientRow = () => {
     setDirty(true);
@@ -197,12 +202,16 @@ export function RecipeEditor({ initial }: { initial: RecipeEditorInitial }) {
 
   const applyImport = (draft: ImportedDraft) => {
     setDirty(true);
+    const prep = splitToHoursMinutes(draft.prepMinutes);
+    const cook = splitToHoursMinutes(draft.cookMinutes);
     setForm((f) => ({
       ...f,
       title: draft.title || f.title,
       description: draft.description,
-      prepMinutes: draft.prepMinutes !== null ? String(draft.prepMinutes) : "",
-      cookMinutes: draft.cookMinutes !== null ? String(draft.cookMinutes) : "",
+      prepHours: prep.hours,
+      prepMinutes: prep.minutes,
+      cookHours: cook.hours,
+      cookMinutes: cook.minutes,
       servings: draft.servings !== null ? String(draft.servings) : "",
       category: draft.category ?? "",
       tags: draft.tags,
@@ -226,8 +235,8 @@ export function RecipeEditor({ initial }: { initial: RecipeEditorInitial }) {
     title: form.title.trim(),
     description: form.description.trim(),
     visibility: form.visibility,
-    prepMinutes: parseOptionalNumber(form.prepMinutes),
-    cookMinutes: parseOptionalNumber(form.cookMinutes),
+    prepMinutes: combineHoursMinutes(form.prepHours, form.prepMinutes),
+    cookMinutes: combineHoursMinutes(form.cookHours, form.cookMinutes),
     servings: parseOptionalNumber(form.servings),
     difficulty: form.difficulty === "" ? null : form.difficulty,
     category: form.category.trim() || null,
@@ -457,35 +466,87 @@ export function RecipeEditor({ initial }: { initial: RecipeEditorInitial }) {
           <h2 className="section-heading">Timing & yield</h2>
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <div>
-              <label htmlFor="prep" className="label">
-                Prep minutes
+              <label htmlFor="prep-hours" className="label">
+                Prep time
               </label>
-              <input
-                id="prep"
-                className="input"
-                type="number"
-                min={0}
-                value={form.prepMinutes}
-                onChange={(e) => set("prepMinutes", e.target.value)}
-                aria-invalid={!!fieldError("prepMinutes")}
-                aria-describedby={errorId("prepMinutes")}
-              />
+              <div className="flex gap-2">
+                <div className="relative flex-1">
+                  <input
+                    id="prep-hours"
+                    className="input pr-10"
+                    type="number"
+                    min={0}
+                    placeholder="0"
+                    aria-label="Prep hours"
+                    value={form.prepHours}
+                    onChange={(e) => set("prepHours", e.target.value)}
+                    aria-invalid={!!fieldError("prepMinutes")}
+                    aria-describedby={errorId("prepMinutes")}
+                  />
+                  <span className="pointer-events-none absolute inset-y-0 right-3 flex items-center text-xs text-muted-foreground">
+                    hr
+                  </span>
+                </div>
+                <div className="relative flex-1">
+                  <input
+                    id="prep-min"
+                    className="input pr-10"
+                    type="number"
+                    min={0}
+                    placeholder="0"
+                    aria-label="Prep minutes"
+                    value={form.prepMinutes}
+                    onChange={(e) => set("prepMinutes", e.target.value)}
+                    aria-invalid={!!fieldError("prepMinutes")}
+                    aria-describedby={errorId("prepMinutes")}
+                  />
+                  <span className="pointer-events-none absolute inset-y-0 right-3 flex items-center text-xs text-muted-foreground">
+                    min
+                  </span>
+                </div>
+              </div>
               {renderFieldError("prepMinutes")}
             </div>
             <div>
-              <label htmlFor="cook" className="label">
-                Cook minutes
+              <label htmlFor="cook-hours" className="label">
+                Cook time
               </label>
-              <input
-                id="cook"
-                className="input"
-                type="number"
-                min={0}
-                value={form.cookMinutes}
-                onChange={(e) => set("cookMinutes", e.target.value)}
-                aria-invalid={!!fieldError("cookMinutes")}
-                aria-describedby={errorId("cookMinutes")}
-              />
+              <div className="flex gap-2">
+                <div className="relative flex-1">
+                  <input
+                    id="cook-hours"
+                    className="input pr-10"
+                    type="number"
+                    min={0}
+                    placeholder="0"
+                    aria-label="Cook hours"
+                    value={form.cookHours}
+                    onChange={(e) => set("cookHours", e.target.value)}
+                    aria-invalid={!!fieldError("cookMinutes")}
+                    aria-describedby={errorId("cookMinutes")}
+                  />
+                  <span className="pointer-events-none absolute inset-y-0 right-3 flex items-center text-xs text-muted-foreground">
+                    hr
+                  </span>
+                </div>
+                <div className="relative flex-1">
+                  <input
+                    id="cook-min"
+                    className="input pr-10"
+                    type="number"
+                    min={0}
+                    placeholder="0"
+                    aria-label="Cook minutes"
+                    value={form.cookMinutes}
+                    onChange={(e) => set("cookMinutes", e.target.value)}
+                    aria-invalid={!!fieldError("cookMinutes")}
+                    aria-describedby={errorId("cookMinutes")}
+                  />
+                  <span className="pointer-events-none absolute inset-y-0 right-3 flex items-center text-xs text-muted-foreground">
+                    min
+                  </span>
+                </div>
+              </div>
               {renderFieldError("cookMinutes")}
             </div>
             <div>
@@ -497,7 +558,7 @@ export function RecipeEditor({ initial }: { initial: RecipeEditorInitial }) {
                 className="input flex items-center text-muted-foreground"
                 aria-live="polite"
               >
-                {totalMinutes !== null ? `${totalMinutes} min` : "—"}
+                {totalMinutes !== null ? formatMinutesDuration(totalMinutes) : "—"}
               </div>
             </div>
             <div>
