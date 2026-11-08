@@ -171,6 +171,16 @@ export function parseQuantityInput(input: string): number | null {
 }
 
 /**
+ * Scale a stored quantity by a batch multiplier (e.g. 0.5 for a half batch).
+ * Snaps to 3 decimals so `formatQuantity` sees clean values like `0.3`
+ * instead of IEEE-754 residue like `0.30000000000000004`.
+ */
+export function scaleQuantity(quantity: number, multiplier: number): number {
+  if (!Number.isFinite(quantity) || !Number.isFinite(multiplier)) return quantity;
+  return snapQuantity(quantity * multiplier);
+}
+
+/**
  * Round a computed fraction result to 3 decimal places to avoid
  * IEEE-754 residue like `0.30000000000000004`.
  */

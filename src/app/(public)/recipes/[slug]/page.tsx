@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { notFound, permanentRedirect } from "next/navigation";
+import { IngredientList } from "@/components/IngredientList";
 import { MarkdownView } from "@/components/MarkdownView";
 import { getSessionAccount } from "@/lib/authorization/guards";
 import { hasCapability } from "@/lib/authorization/capabilities";
@@ -151,22 +152,7 @@ export default async function RecipeDetailPage({ params }: Props) {
 
       <section className="card p-6">
         <h2 className="mb-3 font-display text-2xl font-semibold">Ingredients</h2>
-        <ul className="flex flex-col gap-1.5">
-          {[...recipe.ingredients]
-            .sort((a, b) => a.order - b.order)
-            .map((ingredient) => (
-              <li key={ingredient.id} className="flex gap-2 text-sm">
-                <span aria-hidden className="text-accent">•</span>
-                <span>
-                  {ingredient.quantity !== null ? <strong>{formatQuantity(ingredient.quantity)}</strong> : null}
-                  {ingredient.unit ? ` ${ingredient.unit}` : null}
-                  {ingredient.quantity !== null || ingredient.unit ? " " : ""}
-                  {ingredient.name}
-                  {ingredient.note ? <span className="text-muted-foreground">, {ingredient.note}</span> : null}
-                </span>
-              </li>
-            ))}
-        </ul>
+        <IngredientList ingredients={recipe.ingredients} servings={recipe.servings} />
       </section>
 
       <section aria-label="Instructions">
