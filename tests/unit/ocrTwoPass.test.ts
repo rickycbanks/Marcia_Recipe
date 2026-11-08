@@ -586,6 +586,63 @@ describe("recognizeAndExtractWithMistral (no-network)", () => {
     expect(fetchCalls).toHaveLength(2);
   });
 
+  it("uses the extraction model selected in settings for pass 2", async () => {
+    root = await mkdtemp(join(tmpdir(), "ocr-mistral-model-"));
+    process.env.DATA_ROOT = root;
+    process.env.PRIVATE_CONFIG_KEYRING = makeKeyringEnv();
+    resetEnvCache();
+    resetKeyringCache();
+    await ensureDataRoot();
+    await savePrivateOcrConfig({
+      activeProvider: "mistral",
+      mistral: { apiKey: "test-mistral-key-12345", extractionModel: "mistral-large-4" },
+    });
+
+    const pass1Response = {
+      pages: [{ index: 0, markdown: "# Soup\n## Ingredients\n- 1 cup broth\n## Instructions\n1. Heat." }],
+    };
+    const pass2Response = {
+      choices: [{
+        message: {
+          content: JSON.stringify({
+            title: "Soup",
+            description: null,
+            prepMinutes: null,
+            cookMinutes: null,
+            totalMinutes: null,
+            servings: null,
+            ingredients: [{ quantity: "1", unit: "cup", name: "broth", note: null }],
+            steps: ["Heat."],
+            notes: null,
+          }),
+        },
+      }],
+    };
+
+    const fetchImpl = vi.fn(async (url: string | URL | Request, init?: RequestInit) => {
+      const urlStr = typeof url === "string" ? url : url instanceof URL ? url.toString() : url.url;
+      const body = init?.body ? JSON.parse(String(init.body)) : null;
+      if (urlStr.includes("/v1/ocr")) {
+        expect(body.model).toBe("mistral-ocr-latest");
+        return new Response(JSON.stringify(pass1Response), { status: 200 });
+      }
+      if (urlStr.includes("/v1/chat/completions")) {
+        expect(body.model).toBe("mistral-large-4");
+        return new Response(JSON.stringify(pass2Response), { status: 200 });
+      }
+      return new Response("Not found", { status: 404 });
+    });
+
+    const result = await recognizeAndExtractWithMistral(
+      Buffer.from("fake-image"),
+      "image/png",
+      fetchImpl as unknown as typeof fetch,
+    );
+
+    expect(result.status).toBe("ai-normalized");
+    expect(result.draft.title).toBe("Soup");
+  });
+
   it("falls back to heuristic when pass-2 throws", async () => {
     root = await mkdtemp(join(tmpdir(), "ocr-mistral-fallback-"));
     process.env.DATA_ROOT = root;
