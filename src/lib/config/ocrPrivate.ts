@@ -30,12 +30,28 @@ import { decrypt, encrypt, isKeyringAvailable } from "./ocrCrypto";
 export const OCR_PROVIDERS = ["tesseract", "mistral", "gemini"] as const;
 export type OcrProvider = (typeof OCR_PROVIDERS)[number];
 
+/**
+ * Selectable pass-2 (AI normalization / structured extraction) chat models
+ * on the Mistral API. Verified against docs.mistral.ai:
+ *  - mistral-small-latest — current default
+ *  - mistral-large-4     — Mistral Large 4 (multimodal, strict JSON schema)
+ *  - zai-glm-5-3-flash   — Z.ai GLM 5.3 Flash hosted by Mistral
+ */
+export const MISTRAL_EXTRACTION_MODELS = [
+  "mistral-small-latest",
+  "mistral-large-4",
+  "zai-glm-5-3-flash",
+] as const;
+export type MistralExtractionModel = (typeof MISTRAL_EXTRACTION_MODELS)[number];
+export const DEFAULT_MISTRAL_EXTRACTION_MODEL: MistralExtractionModel = "mistral-small-latest";
+
 /** Canonical config shape — what is written on save. */
 const canonicalConfigSchema = z.object({
   activeProvider: z.enum(OCR_PROVIDERS),
   mistral: z
     .object({
       apiKey: z.string().min(1),
+      extractionModel: z.enum(MISTRAL_EXTRACTION_MODELS).optional(),
     })
     .optional(),
   gemini: z
@@ -55,7 +71,10 @@ export type PrivateOcrConfig = z.infer<typeof canonicalConfigSchema>;
 const legacyReadSchema = z.object({
   activeProvider: z.string(),
   mistral: z
-    .object({ apiKey: z.string().min(1) })
+    .object({
+      apiKey: z.string().min(1),
+      extractionModel: z.string().optional(),
+    })
     .optional(),
   gemini: z
     .object({ apiKey: z.string().min(1) })
@@ -70,6 +89,7 @@ export interface SanitizedOcrConfig {
   activeProvider: OcrProvider;
   configured: Record<OcrProvider, boolean>;
   keyringAvailable: boolean;
+  mistralExtractionModel: MistralExtractionModel;
 }
 
 /* -------------------------------- paths ---------------------------------- */
@@ -86,6 +106,17 @@ function resolveProvider(raw: string): OcrProvider {
   // Legacy providers (veryfi, googleDocumentAi) resolve to tesseract
   logger.info("Legacy OCR provider resolved to tesseract", { legacyProvider: raw });
   return "tesseract";
+}
+
+/**
+ * Resolve a stored (possibly absent or retired) extraction model to a
+ * selectable one. Unknown values fall back to the default rather than
+ * breaking OCR imports.
+ */
+function resolveExtractionModel(raw: string | undefined | null): MistralExtractionModel {
+  if (raw && (MISTRAL_EXTRACTION_MODELS as readonly string[]).includes(raw)) return raw as MistralExtractionModel;
+  if (raw) logger.warn("Unknown Mistral extraction model resolved to default", { model: raw });
+  return DEFAULT_MISTRAL_EXTRACTION_MODEL;
 }
 
 /* -------------------------------- read ----------------------------------- */
@@ -128,7 +159,12 @@ async function readEncryptedFile(): Promise<PrivateOcrConfig | null> {
   if (legacy.success) {
     return {
       activeProvider: resolveProvider(legacy.data.activeProvider),
-      mistral: legacy.data.mistral,
+      mistral: legacy.data.mistral
+        ? {
+            apiKey: legacy.data.mistral.apiKey,
+            extractionModel: resolveExtractionModel(legacy.data.mistral.extractionModel),
+          }
+        : undefined,
       gemini: legacy.data.gemini,
     };
   }
@@ -221,6 +257,7 @@ export async function getSanitizedOcrConfig(): Promise<SanitizedOcrConfig> {
     activeProvider: config.activeProvider,
     configured,
     keyringAvailable: isKeyringAvailable(),
+    mistralExtractionModel: resolveExtractionModel(config.mistral?.extractionModel),
   };
 }
 
@@ -228,6 +265,7 @@ export async function getSanitizedOcrConfig(): Promise<SanitizedOcrConfig> {
 
 export interface MistralSecrets {
   apiKey: string;
+  extractionModel: MistralExtractionModel;
 }
 
 export interface GeminiSecrets {
@@ -236,10 +274,15 @@ export interface GeminiSecrets {
 
 export async function getMistralSecrets(): Promise<MistralSecrets | null> {
   const config = await readEncryptedFile();
-  if (config?.mistral?.apiKey) return { apiKey: config.mistral.apiKey };
+  if (config?.mistral?.apiKey) {
+    return {
+      apiKey: config.mistral.apiKey,
+      extractionModel: resolveExtractionModel(config.mistral.extractionModel),
+    };
+  }
   // Legacy fallback
   const envKey = getEnv().MISTRAL_API_KEY;
-  if (envKey) return { apiKey: envKey };
+  if (envKey) return { apiKey: envKey, extractionModel: DEFAULT_MISTRAL_EXTRACTION_MODEL };
   return null;
 }
 
@@ -258,7 +301,7 @@ export async function getGeminiSecrets(): Promise<GeminiSecrets | null> {
  */
 export async function savePrivateOcrConfig(patch: {
   activeProvider?: OcrProvider;
-  mistral?: { apiKey?: string } | null;
+  mistral?: { apiKey?: string; extractionModel?: MistralExtractionModel } | null;
   gemini?: { apiKey?: string } | null;
 }): Promise<void> {
   const existing = await getConfigOrDefaults();
@@ -270,6 +313,9 @@ export async function savePrivateOcrConfig(patch: {
   if (patch.mistral !== undefined && patch.mistral !== null) {
     merged.mistral = {
       apiKey: patch.mistral.apiKey || existing.mistral?.apiKey || "",
+      extractionModel:
+        patch.mistral.extractionModel ??
+        resolveExtractionModel(existing.mistral?.extractionModel),
     };
   } else {
     merged.mistral = existing.mistral;

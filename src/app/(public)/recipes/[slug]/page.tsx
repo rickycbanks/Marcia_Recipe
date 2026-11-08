@@ -8,6 +8,7 @@ import { resolveVisibility } from "@/lib/authorization/visibility";
 import { getVisibleRecipeBySlug } from "@/lib/recipes/service";
 import { getSiteConfig } from "@/lib/storage/repositories/config";
 import { formatQuantity } from "@/lib/shopping-lists/aggregate";
+import { formatMinutesDuration } from "@/lib/duration";
 
 export const dynamic = "force-dynamic";
 
@@ -82,19 +83,19 @@ export default async function RecipeDetailPage({ params }: Props) {
           {recipe.prepMinutes !== null ? (
             <div className="flex gap-1">
               <dt className="font-medium">Prep:</dt>
-              <dd>{recipe.prepMinutes} min</dd>
+              <dd>{formatMinutesDuration(recipe.prepMinutes)}</dd>
             </div>
           ) : null}
           {recipe.cookMinutes !== null ? (
             <div className="flex gap-1">
               <dt className="font-medium">Cook:</dt>
-              <dd>{recipe.cookMinutes} min</dd>
+              <dd>{formatMinutesDuration(recipe.cookMinutes)}</dd>
             </div>
           ) : null}
           {totalMinutes !== null ? (
             <div className="flex gap-1">
               <dt className="font-medium">Total:</dt>
-              <dd>{totalMinutes} min</dd>
+              <dd>{formatMinutesDuration(totalMinutes)}</dd>
             </div>
           ) : null}
           {recipe.servings !== null ? (

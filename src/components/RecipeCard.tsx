@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { formatMinutesDuration } from "@/lib/duration";
 
 export interface RecipeCardData {
   slug: string;
@@ -16,7 +17,7 @@ export interface RecipeCardData {
 
 function formatMinutes(value: number | null): string | null {
   if (value === null) return null;
-  return `${value} min`;
+  return formatMinutesDuration(value);
 }
 
 function difficultyLabel(value: "easy" | "medium" | "hard"): string {

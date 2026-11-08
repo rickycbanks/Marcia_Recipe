@@ -2,11 +2,12 @@
  * Mistral OCR + structured extraction provider.
  *
  * Pass 1: POST https://api.mistral.ai/v1/ocr — fixed mistral-ocr-latest model → OCR markdown.
- * Pass 2: POST https://api.mistral.ai/v1/chat/completions — fixed mistral-small-latest model,
- *          strict json_schema response format → structured recipe JSON.
+ * Pass 2: POST https://api.mistral.ai/v1/chat/completions — extraction model selected in
+ *          Admin Settings (default mistral-small-latest), strict json_schema response
+ *          format → structured recipe JSON.
  *
- * The API key is loaded from the encrypted private config, falling back to
- * MISTRAL_API_KEY env for legacy deployments.
+ * The API key and extraction model are loaded from the encrypted private
+ * config, falling back to MISTRAL_API_KEY env for legacy deployments.
  */
 
 import { fetch as undiciFetch } from "undici";
@@ -26,7 +27,6 @@ import { validateOcrPageImages, type OcrPageImage } from "./pageImage";
 const MISTRAL_OCR_URL = "https://api.mistral.ai/v1/ocr";
 const MISTRAL_CHAT_URL = "https://api.mistral.ai/v1/chat/completions";
 const MISTRAL_OCR_MODEL = "mistral-ocr-latest";
-const MISTRAL_CHAT_MODEL = "mistral-small-latest";
 
 export interface MistralResponseLike {
   ok: boolean;
@@ -86,6 +86,7 @@ async function passOne(
 async function passTwo(
   ocrText: string,
   apiKey: string,
+  model: string,
   fetchImpl: typeof fetch,
 ): Promise<string> {
   const userContent = `${EXTRACTION_USER_PROMPT_PREFIX}${normalizeLatexFractions(ocrText)}`;
@@ -100,7 +101,7 @@ async function passTwo(
         Accept: "application/json",
       },
       body: JSON.stringify({
-        model: MISTRAL_CHAT_MODEL,
+        model,
         messages: [
           { role: "system", content: SYSTEM_PROMPT },
           { role: "user", content: userContent },
@@ -147,12 +148,13 @@ async function passTwo(
 async function extractFromOcrText(
   ocrText: string,
   apiKey: string,
+  model: string,
   fetchImpl: typeof fetch,
 ): Promise<ExtractionResult> {
   // Pass 2: OCR text → structured recipe JSON
   let rawJson: string;
   try {
-    rawJson = await passTwo(ocrText, apiKey, fetchImpl);
+    rawJson = await passTwo(ocrText, apiKey, model, fetchImpl);
     logger.info("Mistral pass-2 extraction completed");
   } catch {
     // Pass 2 failure: fall back to the heuristic parser on pass-1 text
@@ -234,7 +236,7 @@ export async function recognizeAndExtractWithMistral(
   const ocrText = await passOne(imageBuffer, mimeType, secrets.apiKey, fetchImpl);
   logger.info("Mistral pass-1 OCR completed", { bytes: imageBuffer.byteLength });
 
-  return extractFromOcrText(ocrText, secrets.apiKey, fetchImpl);
+  return extractFromOcrText(ocrText, secrets.apiKey, secrets.extractionModel, fetchImpl);
 }
 
 /**
@@ -269,5 +271,5 @@ export async function recognizeAndExtractWithMistralPages(
   }
 
   const ocrText = pageTexts.join("\n\n");
-  return extractFromOcrText(ocrText, secrets.apiKey, fetchImpl);
+  return extractFromOcrText(ocrText, secrets.apiKey, secrets.extractionModel, fetchImpl);
 }

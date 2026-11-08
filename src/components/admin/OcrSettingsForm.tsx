@@ -5,10 +5,27 @@ import { useState, type FormEvent } from "react";
 
 type OcrProvider = "tesseract" | "mistral" | "gemini";
 
+/** Selectable Mistral pass-2 (structured extraction) models. */
+const MISTRAL_EXTRACTION_MODELS = [
+  {
+    value: "mistral-small-latest",
+    label: "Mistral Small (mistral-small-latest) — default",
+  },
+  {
+    value: "mistral-large-4",
+    label: "Mistral Large 4 (mistral-large-4)",
+  },
+  {
+    value: "zai-glm-5-3-flash",
+    label: "Z.ai GLM 5.3 Flash (zai-glm-5-3-flash)",
+  },
+] as const;
+
 interface SanitizedConfig {
   activeProvider: OcrProvider;
   configured: Record<OcrProvider, boolean>;
   keyringAvailable: boolean;
+  mistralExtractionModel: string;
 }
 
 interface MistralFields {
@@ -24,6 +41,9 @@ export function OcrSettingsForm({ initial }: { initial: SanitizedConfig }) {
   const [config, setConfig] = useState<SanitizedConfig>(initial);
   const [activeProvider, setActiveProvider] = useState<OcrProvider>(initial.activeProvider);
   const [mistral, setMistral] = useState<MistralFields>({ apiKey: "" });
+  const [extractionModel, setExtractionModel] = useState(
+    initial.mistralExtractionModel || "mistral-small-latest",
+  );
   const [gemini, setGemini] = useState<GeminiFields>({ apiKey: "" });
   const [status, setStatus] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -37,13 +57,14 @@ export function OcrSettingsForm({ initial }: { initial: SanitizedConfig }) {
 
     const patch: {
       activeProvider: OcrProvider;
-      mistral?: { apiKey: string };
+      mistral?: { apiKey?: string; extractionModel: string };
       gemini?: { apiKey: string };
     } = { activeProvider };
 
-    // Only send provider-specific fields when they have values (blank retains existing)
-    if (activeProvider === "mistral" && mistral.apiKey) {
-      patch.mistral = { apiKey: mistral.apiKey };
+    if (activeProvider === "mistral") {
+      // Always send the model selection; the API key is only sent when a new
+      // value was entered (blank retains the existing key).
+      patch.mistral = { extractionModel, ...(mistral.apiKey ? { apiKey: mistral.apiKey } : {}) };
     } else if (activeProvider === "gemini" && gemini.apiKey) {
       patch.gemini = { apiKey: gemini.apiKey };
     }
@@ -70,6 +91,7 @@ export function OcrSettingsForm({ initial }: { initial: SanitizedConfig }) {
         const body = (await refresh.json()) as SanitizedConfig;
         setConfig(body);
         setActiveProvider(body.activeProvider);
+        setExtractionModel(body.mistralExtractionModel || "mistral-small-latest");
       }
     } catch {
       // Best effort — router.refresh below will re-render the server component.
@@ -126,9 +148,26 @@ export function OcrSettingsForm({ initial }: { initial: SanitizedConfig }) {
         <div className="flex flex-col gap-2 rounded-md border border-border p-4">
           <p className="text-sm font-medium">Mistral credentials</p>
           <p className="help-text">
-            Uses <code className="rounded bg-muted px-1">mistral-ocr-latest</code> for OCR and
-            <code className="rounded bg-muted px-1">mistral-small-latest</code> for structured extraction.
+            Uses <code className="rounded bg-muted px-1">mistral-ocr-latest</code> for OCR and the
+            selected extraction model for structured recipe data.
           </p>
+          <div>
+            <label htmlFor="mistral-extraction-model" className="label">
+              Extraction model (pass 2)
+            </label>
+            <select
+              id="mistral-extraction-model"
+              className="input"
+              value={extractionModel}
+              onChange={(e) => setExtractionModel(e.target.value)}
+            >
+              {MISTRAL_EXTRACTION_MODELS.map((model) => (
+                <option key={model.value} value={model.value}>
+                  {model.label}
+                </option>
+              ))}
+            </select>
+          </div>
           <div>
             <label htmlFor="mistral-api-key" className="label">
               API Key
