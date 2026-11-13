@@ -15,7 +15,9 @@
  *     denominator ≤ 8), e.g. 3 tsp → 1 tbsp, 16 oz → 1 lb, 1000 g → 1 kg.
  *   - US-volume also converts when ≥ 4 of the smaller unit equals a clean
  *     fraction of the next larger unit (4 tbsp → 1/4 cup, 12 tsp → 1/4 cup,
- *     8 tbsp → 1/2 cup) — the idiomatic kitchen convention.
+ *     8 tbsp → 1/2 cup) — the idiomatic kitchen convention. The US-volume
+ *     ladder stops at cup (user feedback): pint, quart and gallon stay as
+ *     entered and never auto-convert upward.
  *
  * Immutability note: pure functions and frozen tables only.
  */
@@ -38,15 +40,18 @@ interface Family {
   allowFractionalStepUp: boolean;
 }
 
-/** US volume — base unit teaspoon. fl oz is intentionally not a rung. */
+/**
+ * US volume — base unit teaspoon. The ladder stops at cup: pint, quart and
+ * gallon remain valid units but map to one-rung families below so they are
+ * never rewritten (user feedback — no automatic cup → pint → … conversions).
+ * fl oz is likewise not a rung. True ratios kept for reference:
+ * 2 cup = 1 pint, 2 pint = 1 quart, 4 quart = 1 gallon.
+ */
 const VOLUME_US: Family = {
   rungs: [
     ["tsp", 1],
     ["tbsp", 3],
     ["cup", 48],
-    ["pint", 96],
-    ["quart", 192],
-    ["gallon", 768],
   ] as const,
   allowFractionalStepUp: true,
 };
@@ -78,13 +83,18 @@ const VOLUME_METRIC: Family = {
   allowFractionalStepUp: false,
 };
 
-/** Unit → family lookup (fl oz maps to a one-rung family so it is never rewritten). */
+/**
+ * Unit → family lookup. fl oz and the above-cup US volumes (pint, quart,
+ * gallon) each map to a one-rung family so they are never rewritten.
+ */
 const FAMILY_BY_UNIT = new Map<UnitId, Family>([
   ...VOLUME_US.rungs.map(([id]) => [id, VOLUME_US] as const),
   ...WEIGHT_US.rungs.map(([id]) => [id, WEIGHT_US] as const),
   ...WEIGHT_METRIC.rungs.map(([id]) => [id, WEIGHT_METRIC] as const),
   ...VOLUME_METRIC.rungs.map(([id]) => [id, VOLUME_METRIC] as const),
-  ["fl oz", { rungs: [["fl oz", 1]], allowFractionalStepUp: false }],
+  ...(["fl oz", "pint", "quart", "gallon"] as const).map(
+    (id) => [id, { rungs: [[id, 1]], allowFractionalStepUp: false }] as const,
+  ),
 ]);
 
 /* --------------------------------- aliases --------------------------------- */
