@@ -30,11 +30,15 @@ describe("normalizeMeasure", () => {
     expect(normalizeMeasure(3, "teaspoons")).toEqual({ quantity: 1, unit: "tbsp" });
   });
 
-  it("converts upward through the volume chain", () => {
+  it("ladders US volume up to a cup but never beyond", () => {
     expect(normalizeMeasure(48, "tsp")).toEqual({ quantity: 1, unit: "cup" });
     expect(normalizeMeasure(16, "tbsp")).toEqual({ quantity: 1, unit: "cup" });
-    expect(normalizeMeasure(2, "cup")).toEqual({ quantity: 1, unit: "pint" });
-    expect(normalizeMeasure(4, "quart")).toEqual({ quantity: 1, unit: "gallon" });
+    expect(normalizeMeasure(768, "tsp")).toEqual({ quantity: 16, unit: "cups" });
+    // user feedback: cup and everything larger stays as entered
+    expect(normalizeMeasure(2, "cup")).toEqual({ quantity: 2, unit: "cups" });
+    expect(normalizeMeasure(2, "pint")).toEqual({ quantity: 2, unit: "pints" });
+    expect(normalizeMeasure(4, "quart")).toEqual({ quantity: 4, unit: "quarts" });
+    expect(normalizeMeasure(2, "gallon")).toEqual({ quantity: 2, unit: "gallons" });
   });
 
   it("leaves values below 1 in the original unit", () => {
@@ -91,7 +95,7 @@ describe("normalizeMeasure", () => {
   it("pluralizes labels only when the quantity exceeds one", () => {
     expect(normalizeMeasure(3, "quart")).toEqual({ quantity: 3, unit: "quarts" });
     expect(normalizeMeasure(0.5, "cup")).toEqual({ quantity: 0.5, unit: "cup" });
-    expect(normalizeMeasure(2, "pint")).toEqual({ quantity: 1, unit: "quart" });
+    expect(normalizeMeasure(2, "pint")).toEqual({ quantity: 2, unit: "pints" });
     expect(normalizeMeasure(2, "gallon")).toEqual({ quantity: 2, unit: "gallons" });
   });
 });
